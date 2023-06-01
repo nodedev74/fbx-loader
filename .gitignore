@@ -1,0 +1,22 @@
+# Visual Studio Code
+
+/.vscode/settings.json
+
+# Maven
+
+/target
+
+*.dll
+
+# Java
+
+*.class
+
+com_github_nodedev74_jfbx_*.h
+
+# Draw.io
+
+**/*.drawio.bkp
+**/*.drawio.dtmp
+
+**/*.drawio.pdf

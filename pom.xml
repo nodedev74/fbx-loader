@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.github.nodedev74</groupId>
+    <artifactId>jfbx</artifactId>
+    <version>1.0.0</version>
+
+    <name>jfbx-loader</name>
+    <description>jfbx-loader is a Vulkan JavaFX-based library for creating an FBX render context</description>
+
+    <properties>
+        <maven.compiler.source>19</maven.compiler.source>
+        <maven.compiler.target>19</maven.compiler.target>
+
+        <java.resources.directory>${project.basedir}/src/main/resources</java.resources.directory>
+        <java.directory.source>${project.basedir}/src/main/java/com/github/nodedev74/jfbx</java.directory.source>
+        <jni.directory.source>${project.basedir}/src/main/native/source</jni.directory.source>
+        <jni.directory.include>${project.basedir}/src/main/native/include</jni.directory.include>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <compilerVersion>${maven.compiler.target}</compilerVersion>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <?m2e execute onConfiguration?>
+                        <id>generate-headers</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>javac</executable>
+                            <workingDirectory>${jni.directory.include}/jni</workingDirectory>
+                            <arguments>
+                                <argument>-h</argument>
+                                <argument>${jni.directory.include}/jni</argument>
+                                <argument>${java.directory.source}/HelloJNI.java</argument>
+                            </arguments>
+                            <redirectOutput>true</redirectOutput>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <?m2e execute onConfiguration?>
+                        <id>generate-shared</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>g++</executable>
+                            <workingDirectory>${jni.directory.source}</workingDirectory>
+                            <arguments>
+                                <argument>-std=c++11</argument>
+                                <argument>-shared</argument>
+                                <argument>-fPIC</argument>
+                                <argument>-I${jni.directory.include}</argument>
+                                <argument>-I${jni.directory.include}/jni</argument>
+                                <argument>-I${env.JAVA_HOME}/include</argument>
+                                <argument>-I${env.JAVA_HOME}/include/win32</argument>
+                                <argument>HelloJNIImpl.cpp</argument>
+                                <argument>-o</argument>
+                                <argument>${java.resources.directory}/native/libhello.dll</argument>
+                            </arguments>
+                            <redirectOutput>true</redirectOutput>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <manifestEntries>
+                                        <Main-Class>com.github.nodedev74.jfbx.HelloJNI</Main-Class>
+                                        <Build-Number>1.0</Build-Number>
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
