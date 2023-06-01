@@ -18,6 +18,16 @@
         <maven.compiler.target>19</maven.compiler.target>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.10.0-M1</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
 
     <build>
         <plugins>
@@ -93,7 +103,6 @@
                                 <argument>-o</argument>
                                 <argument>HelloWorldJNI.o</argument>
                             </arguments>
-                            <redirectOutput>true</redirectOutput>
                         </configuration>
                     </execution>
                     <execution>
@@ -108,11 +117,10 @@
                             <arguments>
                                 <argument>-shared</argument>
                                 <argument>-o</argument>
-                                <argument>${project.build.directory}/libhello.dll</argument>
+                                <argument>${project.basedir}/src/main/resources/native/libhello.dll</argument>
                                 <argument>HelloWorldJNI.o</argument>
                                 <argument>-Wl,--add-stdcall-alias</argument>
                             </arguments>
-                            <redirectOutput>true</redirectOutput>
                         </configuration>
                     </execution>
                 </executions>
@@ -132,11 +140,18 @@
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
-                                        <Main-Class>com.github.nodedev74.jfbx.HelloWorldJNI</Main-Class>
                                         <Build-Number>1.0</Build-Number>
                                     </manifestEntries>
                                 </transformer>
                             </transformers>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources</directory>
+                                    <includes>
+                                        <include>**/*</include>
+                                    </includes>
+                                </resource>
+                            </resources>
                         </configuration>
                     </execution>
                 </executions>
