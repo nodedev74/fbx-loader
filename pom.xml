@@ -16,22 +16,58 @@
     <properties>
         <maven.compiler.source>19</maven.compiler.source>
         <maven.compiler.target>19</maven.compiler.target>
-
-        <java.resources.directory>${project.basedir}/src/main/resources</java.resources.directory>
-        <java.directory.source>${project.basedir}/src/main/java/com/github/nodedev74/jfbx</java.directory.source>
-        <jni.directory.source>${project.basedir}/src/main/native/source</jni.directory.source>
-        <jni.directory.include>${project.basedir}/src/main/native/include</jni.directory.include>
     </properties>
+
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
-                <configuration>
-                    <compilerVersion>${maven.compiler.target}</compilerVersion>
-                </configuration>
+                <version>3.8.1</version>
+                <executions>
+                    <execution>
+                        <id>compile-java-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <source>19</source>
+                            <target>19</target>
+                            <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                            <compilerArgs>
+                                <arg>-h</arg>
+                                <arg>${project.build.directory}/generated-headers</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-cpp-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/native-sources</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/src/main/native/src</directory>
+                                    <includes>
+                                        <include>**/*.cpp</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -39,44 +75,42 @@
                 <version>3.1.0</version>
                 <executions>
                     <execution>
-                        <?m2e execute onConfiguration?>
-                        <id>generate-headers</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>javac</executable>
-                            <workingDirectory>${jni.directory.include}/jni</workingDirectory>
-                            <arguments>
-                                <argument>-h</argument>
-                                <argument>${jni.directory.include}/jni</argument>
-                                <argument>${java.directory.source}/HelloJNI.java</argument>
-                            </arguments>
-                            <redirectOutput>true</redirectOutput>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <?m2e execute onConfiguration?>
-                        <id>generate-shared</id>
+                        <id>cpp-compile-process</id>
                         <phase>compile</phase>
                         <goals>
                             <goal>exec</goal>
                         </goals>
                         <configuration>
                             <executable>g++</executable>
-                            <workingDirectory>${jni.directory.source}</workingDirectory>
+                            <workingDirectory>${project.build.directory}/native-sources</workingDirectory>
                             <arguments>
-                                <argument>-std=c++11</argument>
-                                <argument>-shared</argument>
-                                <argument>-fPIC</argument>
-                                <argument>-I${jni.directory.include}</argument>
-                                <argument>-I${jni.directory.include}/jni</argument>
+                                <argument>-c</argument>
                                 <argument>-I${env.JAVA_HOME}/include</argument>
                                 <argument>-I${env.JAVA_HOME}/include/win32</argument>
-                                <argument>HelloJNIImpl.cpp</argument>
+                                <argument>-I${project.basedir}/src/main/native/include</argument>
+                                <argument>-I${project.build.directory}/generated-headers</argument>
+                                <argument>HelloWorldJNI.cpp</argument>
                                 <argument>-o</argument>
-                                <argument>${java.resources.directory}/native/libhello.dll</argument>
+                                <argument>HelloWorldJNI.o</argument>
+                            </arguments>
+                            <redirectOutput>true</redirectOutput>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>cpp-linking-process</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>g++</executable>
+                            <workingDirectory>${project.build.directory}/native-sources</workingDirectory>
+                            <arguments>
+                                <argument>-shared</argument>
+                                <argument>-o</argument>
+                                <argument>${project.build.directory}/libhello.dll</argument>
+                                <argument>HelloWorldJNI.o</argument>
+                                <argument>-Wl,--add-stdcall-alias</argument>
                             </arguments>
                             <redirectOutput>true</redirectOutput>
                         </configuration>
@@ -98,7 +132,7 @@
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
-                                        <Main-Class>com.github.nodedev74.jfbx.HelloJNI</Main-Class>
+                                        <Main-Class>com.github.nodedev74.jfbx.HelloWorldJNI</Main-Class>
                                         <Build-Number>1.0</Build-Number>
                                     </manifestEntries>
                                 </transformer>
