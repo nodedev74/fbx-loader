@@ -44,7 +44,7 @@ public abstract class Application implements AppilcationInterface {
                     if (element.isActive()) {
                         element.lifecycle();
                     } else {
-                        iterator.remove(); // Element sicher entfernen
+                        iterator.remove();
                         if (children.size() == 0) {
                             Application.exit();
                         }
