@@ -92,7 +92,9 @@ extern "C" JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkWindow
     {
         if (event.type == SDL_QUIT)
         {
-            sdlWindow->destroyWindow();
+            jclass javaClass = env->GetObjectClass(obj);
+            jmethodID javaMethod = env->GetMethodID(javaClass, "close", "()V");
+            env->CallVoidMethod(obj, javaMethod);
         }
 
         if (event.type == SDL_WINDOWEVENT)

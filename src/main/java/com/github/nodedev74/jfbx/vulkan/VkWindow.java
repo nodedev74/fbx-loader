@@ -9,15 +9,19 @@ public class VkWindow extends Control {
 
     private long sdlWindowPtr;
 
+    private Timer timer;
+    private TimerTask timerTask;
+
     public VkWindow(int width, int height) {
         sdlWindowPtr = createSDLWindow(width, height);
 
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
+        timer = new Timer();
+        timerTask = new TimerTask() {
             public void run() {
                 renderSDLWindow(sdlWindowPtr);
             }
-        }, 0, 16);
+        };
+        timer.schedule(timerTask, 0, 16);
     }
 
     public void show() {
@@ -29,6 +33,8 @@ public class VkWindow extends Control {
     }
 
     public void close() {
+        timer.cancel();
+        timerTask.cancel();
         destroySDLWindow(sdlWindowPtr);
         delete();
     }
