@@ -25,7 +25,6 @@
             <version>5.10.0-M1</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
 
@@ -94,14 +93,15 @@
                             <executable>g++</executable>
                             <workingDirectory>${project.build.directory}/native-sources</workingDirectory>
                             <arguments>
-                                <argument>-c</argument>
                                 <argument>-I${env.JAVA_HOME}/include</argument>
                                 <argument>-I${env.JAVA_HOME}/include/win32</argument>
                                 <argument>-I${project.basedir}/src/main/native/include</argument>
                                 <argument>-I${project.build.directory}/generated-headers</argument>
-                                <argument>HelloWorldJNI.cpp</argument>
-                                <argument>-o</argument>
-                                <argument>HelloWorldJNI.o</argument>
+                                <argument>-I${env.VULKAN_SDK}/Include</argument>
+                                <argument>-c</argument>
+                                <argument>vulkan/VkInstance.cpp</argument>
+                                <argument>vulkan/VkDebugger.cpp</argument>
+                                <argument>vulkan/VkWindow.cpp</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -118,7 +118,11 @@
                                 <argument>-shared</argument>
                                 <argument>-o</argument>
                                 <argument>${project.basedir}/src/main/resources/native/libhello.dll</argument>
-                                <argument>HelloWorldJNI.o</argument>
+                                <argument>VkInstance.o</argument>
+                                <argument>VkDebugger.o</argument>
+                                <argument>VkWindow.o</argument>
+                                <argument>-L${env.VULKAN_SDK}/Lib</argument>
+                                <argument>-lSDL2</argument>
                                 <argument>-Wl,--add-stdcall-alias</argument>
                             </arguments>
                         </configuration>
