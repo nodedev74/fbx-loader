@@ -29,7 +29,6 @@ public class NativeLoader {
 
         File tempFile = File.createTempFile("lib", ".dll", target.toFile());
         writeTempFile(path, tempFile);
-        tempFile.deleteOnExit();
 
         return tempFile;
     }
@@ -39,6 +38,9 @@ public class NativeLoader {
                 InputStream inputStream = path.openStream()) {
             byte[] allBytes = inputStream.readAllBytes();
             outputStream.write(allBytes);
+
+            outputStream.close();
+            inputStream.close();
         }
     }
 
