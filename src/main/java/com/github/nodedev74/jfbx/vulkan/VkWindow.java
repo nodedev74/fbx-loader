@@ -1,63 +1,71 @@
 package com.github.nodedev74.jfbx.vulkan;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 import com.github.nodedev74.jfbx.stage.control.Control;
 
 public class VkWindow extends Control {
 
     private long sdlWindowPtr;
 
-    private Timer timer;
-    private TimerTask timerTask;
+    private int width;
+    private int height;
+
+    private VkHandler handler;
+    private VkRenderer renderer;
 
     public VkWindow(int width, int height) {
-        sdlWindowPtr = createSDLWindow(width, height);
+        this.width = width;
+        this.height = height;
+        this.loadSDL();
 
-        timer = new Timer();
-        timerTask = new TimerTask() {
-            public void run() {
-                renderSDLWindow(sdlWindowPtr);
-            }
-        };
-        timer.schedule(timerTask, 0, 16);
+        handler = new VkHandler();
+        sdlWindowPtr = create(width, height);
+
+        handler.createInstance();
+        handler.selectPhysicalDevice();
+        handler.createLogicalDevice();
+        handler.createSwapchain(sdlWindowPtr);
+        handler.createImageViews();
+        handler.createRenderPass();
+        handler.createGraphicsPipeline();
+        handler.createFramebuffers();
     }
 
-    public void show() {
-        showSDLWindow(sdlWindowPtr);
-    }
+    /**
+     * 
+     */
+    private native void loadSDL();
 
-    public void hide() {
-        hideSDLWindow(sdlWindowPtr);
-    }
+    /**
+     * 
+     * @param width
+     * @param height
+     * @return
+     */
+    public native long create(int width, int height);
 
-    public void close() {
-        timer.cancel();
-        timerTask.cancel();
-        destroySDLWindow(sdlWindowPtr);
-        delete();
-    }
+    /**
+     * 
+     */
+    public native void destroy();
 
-    public long getWindowPtr() {
-        return sdlWindowPtr;
-    }
+    /**
+     * 
+     */
+    public native void show();
+
+    /**
+     * 
+     */
+    public native void hide();
+
+    /**
+     * 
+     * @param sdlWindowPtr
+     */
+    private native void run(long sdlWindowPtr);
 
     @Override
     public void lifecycle() {
-        cycleSDLWindow(sdlWindowPtr);
+        run(sdlWindowPtr);
     }
-
-    private native long createSDLWindow(int width, int height);
-
-    private native void hideSDLWindow(long sdlWindowPtr);
-
-    private native void showSDLWindow(long sdlWindowPtr);
-
-    private native void renderSDLWindow(long sdlWindowPtr);
-
-    private native void destroySDLWindow(long sdlWindowPtr);
-
-    public native void cycleSDLWindow(long sdlWindowPtr);
-
 }
