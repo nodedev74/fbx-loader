@@ -54,6 +54,47 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>vertex-shader</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${env.VULKAN_SDK}/Bin/glslc.exe</executable>
+                            <workingDirectory>${project.basedir}/src/main/resources/shaders</workingDirectory>
+                            <arguments>
+                                <argument>
+                                    ${project.basedir}/src/main/native/vulkan/shaders/shader.vert</argument>
+                                <argument>-o</argument>
+                                <argument>vert.spv</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>fragment-shader</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${env.VULKAN_SDK}/Bin/glslc.exe</executable>
+                            <workingDirectory>${project.basedir}/src/main/resources/shaders</workingDirectory>
+                            <arguments>
+                                <argument>
+                                    ${project.basedir}/src/main/native/vulkan/shaders/shader.frag</argument>
+                                <argument>-o</argument>
+                                <argument>frag.spv</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>3.2.0</version>

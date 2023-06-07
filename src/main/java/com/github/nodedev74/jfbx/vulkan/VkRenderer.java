@@ -1,5 +1,5 @@
 package com.github.nodedev74.jfbx.vulkan;
 
-public class VkDebugger {
+public class VkRenderer {
     
 }

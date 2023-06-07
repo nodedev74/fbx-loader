@@ -6,6 +6,8 @@
 
 /target
 
+*.log
+
 *.dll
 
 # Java

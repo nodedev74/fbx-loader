@@ -20,14 +20,11 @@ public class VkWindow extends Control {
         handler = new VkHandler();
         sdlWindowPtr = create(width, height);
 
-        handler.createInstance();
+        handler.createInstance(sdlWindowPtr);
         handler.selectPhysicalDevice();
         handler.createLogicalDevice();
         handler.createSwapchain(sdlWindowPtr);
         handler.createImageViews();
-        handler.createRenderPass();
-        handler.createGraphicsPipeline();
-        handler.createFramebuffers();
     }
 
     /**
