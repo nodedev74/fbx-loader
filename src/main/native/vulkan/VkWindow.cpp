@@ -11,23 +11,15 @@
  *
  * @param env
  * @param obj
- */
-JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkWindow_loadSDL(JNIEnv *env, jobject obj)
-{
-    SDL_Init(SDL_INIT_VIDEO);
-}
-
-/**
- * @brief
- *
- * @param env
- * @param obj
  * @param width
  * @param height
  */
 JNIEXPORT jlong JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkWindow_create(JNIEnv *env, jobject obj, jint width, jint height)
 {
-    SDL_Window *window = SDL_CreateWindow(APP_NAME, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_HIDDEN | SDL_WINDOW_VULKAN);
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Vulkan_LoadLibrary(nullptr);
+
+    SDL_Window *window = SDL_CreateWindow(APP_NAME, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_HIDDEN);
 
     jlong sdlWindowPtr = reinterpret_cast<jlong>(window);
     return sdlWindowPtr;

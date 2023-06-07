@@ -2,14 +2,29 @@ package com.github.nodedev74.jfbx.vulkan;
 
 public class VkHandler {
 
-    public VkHandler() {
-        loadVulkan();
+    private long sdlWindowPtr;
+
+    /**
+     * 
+     * @param sdlWindowPtr
+     */
+    public VkHandler(long sdlWindowPtr) {
+        this.sdlWindowPtr = sdlWindowPtr;
+        this.prepare();
     }
 
     /**
      * 
      */
-    private native void loadVulkan();
+    private void prepare() {
+        createInstance();
+        selectPhysicalDevice();
+        createDevice();
+        createSwapchain();
+        createImageViews();
+        createRenderPass();
+        createGraphicsPipeline();
+    }
 
     /**
      * 
@@ -19,42 +34,36 @@ public class VkHandler {
     /**
      * 
      */
-    public native void createInstance(long sdlWindowPtr);
+    private native void createInstance();
 
     /**
      * 
      */
-    public native void selectPhysicalDevice();
+    private native void selectPhysicalDevice();
 
     /**
      * 
      */
-    public native void createLogicalDevice();
-
-    /**
-     * 
-     * @param sdlWindowPtr
-     */
-    public native void createSwapchain(long sdlWindowPtr);
+    private native void createDevice();
 
     /**
      * 
      */
-    public native void createImageViews();
+    private native void createSwapchain();
 
     /**
      * 
      */
-    public native void createRenderPass();
+    private native void createImageViews();
 
     /**
      * 
      */
-    public native void createGraphicsPipeline();
+    private native void createRenderPass();
 
     /**
-     * 
-     */
-    public native void createFramebuffers();
+    * 
+    */
+    private native void createGraphicsPipeline();
 
 }

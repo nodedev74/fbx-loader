@@ -15,22 +15,10 @@ public class VkWindow extends Control {
     public VkWindow(int width, int height) {
         this.width = width;
         this.height = height;
-        this.loadSDL();
 
-        handler = new VkHandler();
         sdlWindowPtr = create(width, height);
-
-        handler.createInstance(sdlWindowPtr);
-        handler.selectPhysicalDevice();
-        handler.createLogicalDevice();
-        handler.createSwapchain(sdlWindowPtr);
-        handler.createImageViews();
+        handler = new VkHandler(sdlWindowPtr);
     }
-
-    /**
-     * 
-     */
-    private native void loadSDL();
 
     /**
      * 
