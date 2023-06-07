@@ -22,7 +22,3 @@ com_github_nodedev74_jfbx_*.h
 **/*.drawio.dtmp
 
 **/*.drawio.pdf
-
-# VulkanSDK
-
-**/*.spv
