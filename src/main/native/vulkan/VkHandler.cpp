@@ -42,6 +42,23 @@ std::vector<VkFramebuffer> framebuffers;
 
 uint32_t graphicsQueueFamilyIndex = UINT32_MAX;
 
+#include <iostream>
+
+std::ofstream validationOutputFile;
+
+VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageType,
+    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+    void *pUserData)
+{
+    validationOutputFile << pCallbackData->pMessage << std::endl;
+
+    std::cout << pCallbackData->pMessage << std::endl;
+
+    return VK_FALSE;
+}
+
 /**
  * @brief
  *
@@ -104,12 +121,57 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createIns
     jlong sdlWindowPtr = env->GetLongField(obj, fieldID);
     SDL_Window *sdlWindow = reinterpret_cast<SDL_Window *>(sdlWindowPtr);
 
+    const char *validationOutputFilePath = "C:/dev/usr/validation_output.txt";
+    validationOutputFile.open(validationOutputFilePath);
+    if (!validationOutputFile.is_open())
+    {
+        std::cerr << "Failed to open validation output file: " << validationOutputFilePath << std::endl;
+        return;
+    }
+
+    const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
+
+    uint32_t layerCount;
+    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+    std::vector<VkLayerProperties> availableLayers(layerCount);
+    vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+    for (const char *layerName : validationLayers)
+    {
+        bool layerFound = false;
+
+        for (const auto &layerProperties : availableLayers)
+        {
+            if (strcmp(layerName, layerProperties.layerName) == 0)
+            {
+                layerFound = true;
+                break;
+            }
+        }
+
+        if (!layerFound)
+        {
+            return;
+        }
+    }
+
+    VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo{};
+    debugMessengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    debugMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                                               VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    debugMessengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                                           VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                                           VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    debugMessengerCreateInfo.pfnUserCallback = DebugCallback;
+
     uint32_t extensionCount;
     SDL_Vulkan_GetInstanceExtensions(sdlWindow, &extensionCount, nullptr);
     std::vector<const char *> extensionNames;
     SDL_Vulkan_GetInstanceExtensions(sdlWindow, &extensionCount, extensionNames.data());
 
     extensionNames.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+    extensionNames.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     extensionNames.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 
     if (!validateExtensions(extensionNames))
@@ -130,6 +192,8 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createIns
     instInfo.pApplicationInfo = &appInfo;
     instInfo.enabledExtensionCount = static_cast<uint32_t>(extensionNames.size());
     instInfo.ppEnabledExtensionNames = extensionNames.data();
+    instInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+    instInfo.ppEnabledLayerNames = validationLayers.data();
 
     VkResult result = vkCreateInstance(&instInfo, nullptr, &instance);
     if (result != VK_SUCCESS)
@@ -177,6 +241,13 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createIns
         env->Throw(static_cast<jthrowable>(exceptionObject));
         return;
     }
+
+    PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT =
+        reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+            vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
+
+    VkDebugUtilsMessengerEXT debugMessenger;
+    vkCreateDebugUtilsMessengerEXT(instance, &debugMessengerCreateInfo, nullptr, &debugMessenger);
 
     if (!SDL_Vulkan_CreateSurface(sdlWindow, instance, &surface))
     {
@@ -604,11 +675,11 @@ std::vector<uint32_t> readSPIRVFile(const std::string &filePath)
  * @param path
  * @return VkShaderModule
  */
-VkShaderModule loadShaderModule(const char *path, JNIEnv *env, jobject obj)
+VkShaderModule loadShaderModule(const char *name, JNIEnv *env, jobject obj)
 {
     jclass cls = env->FindClass("com/github/nodedev74/jfbx/ShaderLoader");
-    jmethodID methodID = env->GetStaticMethodID(cls, "load", "J");
-    jstring shaderName = env->NewStringUTF("vert");
+    jmethodID methodID = env->GetStaticMethodID(cls, "load", "(Ljava/lang/String;)Ljava/lang/String;");
+    jstring shaderName = env->NewStringUTF(name);
     jstring newPath = (jstring)env->CallStaticObjectMethod(cls, methodID, shaderName);
 
     const char *nativeString = env->GetStringUTFChars(newPath, nullptr);
@@ -662,8 +733,6 @@ VkShaderModule loadShaderModule(const char *path, JNIEnv *env, jobject obj)
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createGraphicsPipeline(JNIEnv *env, jobject obj)
 {
     VkShaderModule vertShader = loadShaderModule("vert", env, obj);
-    return;
-
     VkShaderModule fragShader = loadShaderModule("frag", env, obj);
 
     VkPipelineShaderStageCreateInfo vertexShaderStageInfo{};
@@ -738,8 +807,25 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createGra
     colorBlending.attachmentCount = 1;
     colorBlending.pAttachments = &colorBlendAttachment;
 
+    VkDescriptorSetLayoutBinding uboLayoutBinding{};
+    uboLayoutBinding.binding = 0;
+    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uboLayoutBinding.descriptorCount = 1;
+    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+
+    VkDescriptorSetLayoutCreateInfo layoutCreateInfo{};
+    layoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutCreateInfo.bindingCount = 1;
+    layoutCreateInfo.pBindings = &uboLayoutBinding;
+
+    VkDescriptorSetLayout descriptorSetLayout;
+    vkCreateDescriptorSetLayout(device, &layoutCreateInfo, nullptr, &descriptorSetLayout);
+
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 
     VkResult result = vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
     if (result != VK_SUCCESS)
