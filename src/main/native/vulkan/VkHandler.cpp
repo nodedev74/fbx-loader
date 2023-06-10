@@ -901,3 +901,91 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createGra
     vkDestroyShaderModule(device, vertShader, nullptr);
     vkDestroyShaderModule(device, fragShader, nullptr);
 }
+
+/**
+ * @brief
+ *
+ * @param env
+ * @param obj
+ */
+JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createFramebuffers(JNIEnv *env, jobject obj)
+{
+    uint32_t imageCount;
+    vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
+
+    std::vector<VkImage> swapchainImages(imageCount);
+    vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data());
+
+    VkSurfaceCapabilitiesKHR surfaceCapabilities;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, surface, &surfaceCapabilities);
+
+    for (auto &image_view : imageViews)
+    {
+        VkFramebufferCreateInfo fb_info{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
+        fb_info.renderPass = renderPass;
+        fb_info.attachmentCount = 1;
+        fb_info.pAttachments = &image_view;
+        fb_info.width = surfaceCapabilities.currentExtent.width;
+        fb_info.height = surfaceCapabilities.currentExtent.height;
+        fb_info.layers = 1;
+
+        VkFramebuffer framebuffer;
+        VkResult result = vkCreateFramebuffer(device, &fb_info, nullptr, &framebuffer);
+        if (result != VK_SUCCESS)
+        {
+            jclass exceptionClass;
+            jstring message;
+
+            switch (result)
+            {
+            case VK_ERROR_OUT_OF_HOST_MEMORY:
+            {
+                exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkOutofMemoryError");
+                message = env->NewStringUTF("Host ran out of memory");
+            }
+            case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+            {
+                exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkOutofMemoryError");
+                message = env->NewStringUTF("Device ran out of memory");
+            }
+            }
+            jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
+            jint jResult = static_cast<jint>(result);
+            jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, jResult);
+            env->Throw(static_cast<jthrowable>(exceptionObject));
+            return;
+        }
+        framebuffers.push_back(framebuffer);
+    }
+}
+
+VkResult acquireNextImage()
+{
+}
+
+/**
+ * @brief
+ *
+ */
+void teardownFramebuffers()
+{
+    vkQueueWaitIdle(graphicsQueue);
+
+    for (auto &framebuffer : framebuffers)
+    {
+        vkDestroyFramebuffer(device, framebuffer, nullptr);
+    }
+
+    framebuffers.clear();
+}
+
+/**
+ * @brief
+ *
+ * @param env
+ * @param obj
+ */
+JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_render(JNIEnv *env, jobject obj)
+{
+    vkDeviceWaitIdle(device);
+}

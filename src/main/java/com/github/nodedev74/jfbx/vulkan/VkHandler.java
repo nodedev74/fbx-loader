@@ -24,7 +24,13 @@ public class VkHandler {
         createImageViews();
         createRenderPass();
         createGraphicsPipeline();
+        createFramebuffers();
     }
+
+    /**
+     * 
+     */
+    public native void render();
 
     /**
      * 
@@ -65,5 +71,15 @@ public class VkHandler {
     * 
     */
     private native void createGraphicsPipeline();
+
+    /**
+     * 
+     */
+    private native void createFramebuffers();
+
+    /**
+     * 
+     */
+    private native void renderTriangle();
 
 }

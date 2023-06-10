@@ -140,7 +140,6 @@
                                 <argument>-I${project.build.directory}/generated-headers</argument>
                                 <argument>-I${env.VULKAN_SDK}/Include</argument>
                                 <argument>-c</argument>
-                                <argument>vulkan/VkRenderer.cpp</argument>
                                 <argument>vulkan/VkHandler.cpp</argument>
                                 <argument>vulkan/VkWindow.cpp</argument>
                             </arguments>
@@ -159,7 +158,6 @@
                                 <argument>-shared</argument>
                                 <argument>-o</argument>
                                 <argument>${project.basedir}/src/main/resources/native/libhello.dll</argument>
-                                <argument>VkRenderer.o</argument>
                                 <argument>VkHandler.o</argument>
                                 <argument>VkWindow.o</argument>
                                 <argument>-L${env.VULKAN_SDK}/Lib</argument>
