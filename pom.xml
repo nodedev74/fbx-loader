@@ -69,7 +69,7 @@
                             <workingDirectory>${project.basedir}/src/main/resources/shaders</workingDirectory>
                             <arguments>
                                 <argument>
-                                    ${project.basedir}/src/main/native/vulkan/shaders/shader.vert</argument>
+                                    ${project.basedir}/src/main/native/src/vulkan/shaders/shader.vert</argument>
                                 <argument>-o</argument>
                                 <argument>vert.spv</argument>
                             </arguments>
@@ -86,7 +86,7 @@
                             <workingDirectory>${project.basedir}/src/main/resources/shaders</workingDirectory>
                             <arguments>
                                 <argument>
-                                    ${project.basedir}/src/main/native/vulkan/shaders/shader.frag</argument>
+                                    ${project.basedir}/src/main/native/src/vulkan/shaders/shader.frag</argument>
                                 <argument>-o</argument>
                                 <argument>frag.spv</argument>
                             </arguments>
@@ -109,7 +109,7 @@
                             <outputDirectory>${project.build.directory}/native-sources</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}/src/main/native</directory>
+                                    <directory>${project.basedir}/src/main/native/src</directory>
                                     <includes>
                                         <include>**/*.cpp</include>
                                     </includes>
@@ -139,7 +139,9 @@
                                 <argument>-I${project.basedir}/src/main/native/include</argument>
                                 <argument>-I${project.build.directory}/generated-headers</argument>
                                 <argument>-I${env.VULKAN_SDK}/Include</argument>
+                                <argument>-I${env.VULKAN_SDK}/Include/Volk</argument>
                                 <argument>-c</argument>
+                                <argument>vulkan/VkHelper.cpp</argument>
                                 <argument>vulkan/VkHandler.cpp</argument>
                                 <argument>vulkan/VkWindow.cpp</argument>
                             </arguments>
@@ -158,12 +160,13 @@
                                 <argument>-shared</argument>
                                 <argument>-o</argument>
                                 <argument>${project.basedir}/src/main/resources/native/libhello.dll</argument>
+                                <argument>VkHelper.o</argument>
                                 <argument>VkHandler.o</argument>
                                 <argument>VkWindow.o</argument>
                                 <argument>-L${env.VULKAN_SDK}/Lib</argument>
                                 <argument>-lSDL2</argument>
                                 <argument>-L${env.VULKAN_SDK}/Lib</argument>
-                                <argument>-lvulkan-1</argument>
+                                <argument>-lvolk</argument>
                                 <argument>-Wl,--add-stdcall-alias</argument>
                             </arguments>
                         </configuration>
