@@ -10,7 +10,6 @@ public class VkWindow extends Control {
     private int height;
 
     private VkHandler handler;
-    private VkRenderer renderer;
 
     public VkWindow(int width, int height) {
         this.width = width;
@@ -51,6 +50,7 @@ public class VkWindow extends Control {
 
     @Override
     public void lifecycle() {
+        handler.render();
         run(sdlWindowPtr);
     }
 }

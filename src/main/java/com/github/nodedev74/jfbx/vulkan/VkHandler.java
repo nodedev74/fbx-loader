@@ -18,14 +18,108 @@ public class VkHandler {
      */
     private void prepare() {
         createInstance();
-        selectPhysicalDevice();
-        createDevice();
+        createDebugger();
+        createSureface();
+        createLogicalDevice();
         createSwapchain();
-        createImageViews();
-        createRenderPass();
-        createGraphicsPipeline();
+        createCommandPool();
+        allocateCommandBuffers();
+        createHostBuffers();
+        createDeviceBuffers();
+        createDescriptorPool();
+        allocateDescriptorSets();
+        createRenderpass();
         createFramebuffers();
+        createPipeline();
+        uploadInputData();
+        recordCommandBuffers();
+        createSemaphores();
     }
+
+    /**
+     * 
+     */
+    private native void createInstance();
+
+    /**
+     * 
+     */
+    private native void createDebugger();
+
+    /**
+     * 
+     */
+    private native void createSureface();
+
+    /**
+     * 
+     */
+    private native void createLogicalDevice();
+
+    /**
+     * 
+     */
+    private native void createSwapchain();
+
+    /**
+     * 
+     */
+    private native void createCommandPool();
+
+    /**
+     * 
+     */
+    private native void allocateCommandBuffers();
+
+    /**
+     * 
+     */
+    private native void createHostBuffers();
+
+    /**
+     * 
+     */
+    private native void createDeviceBuffers();
+
+    /**
+     * 
+     */
+    private native void createDescriptorPool();
+
+    /**
+     * 
+     */
+    private native void allocateDescriptorSets();
+
+    /**
+     * 
+     */
+    private native void createRenderpass();
+
+    /**
+     * 
+     */
+    private native void createFramebuffers();
+
+    /**
+     * 
+     */
+    private native void createPipeline();
+
+    /**
+     * 
+     */
+    private native void uploadInputData();
+
+    /**
+     * 
+     */
+    private native void recordCommandBuffers();
+
+    /**
+     * 
+     */
+    private native void createSemaphores();
 
     /**
      * 
@@ -36,50 +130,4 @@ public class VkHandler {
      * 
      */
     public native void destroy();
-
-    /**
-     * 
-     */
-    private native void createInstance();
-
-    /**
-     * 
-     */
-    private native void selectPhysicalDevice();
-
-    /**
-     * 
-     */
-    private native void createDevice();
-
-    /**
-     * 
-     */
-    private native void createSwapchain();
-
-    /**
-     * 
-     */
-    private native void createImageViews();
-
-    /**
-     * 
-     */
-    private native void createRenderPass();
-
-    /**
-    * 
-    */
-    private native void createGraphicsPipeline();
-
-    /**
-     * 
-     */
-    private native void createFramebuffers();
-
-    /**
-     * 
-     */
-    private native void renderTriangle();
-
 }
