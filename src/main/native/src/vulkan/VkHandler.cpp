@@ -109,13 +109,15 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createIns
         return;
     }
 
-    if (volkInitialize() != VK_SUCCESS)
+    VkResult b_result = volkInitialize();
+    if (b_result != VK_SUCCESS)
     {
-        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkInitializationError");
+        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         std::string rawMessage("Failed to initialize Volk-Loader");
         jstring message = env->NewStringUTF(rawMessage.c_str());
-        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message);
+        jint jresult = static_cast<jint>(b_result);
+        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, jresult);
         env->Throw(static_cast<jthrowable>(exceptionObject));
         return;
     }
@@ -146,15 +148,17 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createIns
     instInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
     instInfo.ppEnabledLayerNames = validationLayers.data();
 
-    if (vkCreateInstance(&instInfo, nullptr, &instance))
+    VkResult a_result = vkCreateInstance(&instInfo, nullptr, &instance);
+    if (a_result != VK_SUCCESS)
     {
         instance = VK_NULL_HANDLE;
 
-        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkInitializationError");
+        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         std::string rawMessage("Failed to initialize VkInstance");
         jstring message = env->NewStringUTF(rawMessage.c_str());
-        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message);
+        jint jresult = static_cast<jint>(a_result);
+        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, a_result);
         env->Throw(static_cast<jthrowable>(exceptionObject));
         return;
     }
@@ -199,7 +203,7 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createSur
 
     if (!SDL_Vulkan_CreateSurface(sdlWindow, instance, &surface))
     {
-        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkInitializationError");
+        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         jstring message = env->NewStringUTF("Failed to initialize VkSurfaceKHR");
         jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message);
@@ -270,12 +274,14 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createLog
         desired_device_level_extensions.data(),
         &selected_device_features};
 
-    if (vkCreateDevice(physical_device, &device_create_info, nullptr, &device))
+    VkResult result = vkCreateDevice(physical_device, &device_create_info, nullptr, &device);
+    if (result != VK_SUCCESS)
     {
         jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkInitializationError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         jstring message = env->NewStringUTF("Failed to initialize VkDevice");
-        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message);
+        jint jresult = static_cast<jint>(result);
+        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, jresult);
         env->Throw(static_cast<jthrowable>(exceptionObject));
         return;
     }
@@ -344,12 +350,14 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createSwa
         VK_TRUE,
         old_swapchain};
 
-    if (vkCreateSwapchainKHR(device, &swapchain_create_info, nullptr, &swapchain) != VK_SUCCESS)
+    VkResult b_result = vkCreateSwapchainKHR(device, &swapchain_create_info, nullptr, &swapchain);
+    if (b_result != VK_SUCCESS)
     {
-        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkInitializationError");
+        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         jstring message = env->NewStringUTF("Failed to initialize VkSwapchainKHR");
-        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message);
+        jint jresult = static_cast<jint>(b_result);
+        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, jresult);
         env->Throw(static_cast<jthrowable>(exceptionObject));
         return;
     }
@@ -374,12 +382,14 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createCom
         queue_family_index,
     };
 
-    if (vkCreateCommandPool(device, &command_pool_create_info, nullptr, &command_pool))
+    VkResult result = vkCreateCommandPool(device, &command_pool_create_info, nullptr, &command_pool);
+    if (result != VK_SUCCESS)
     {
-        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkInitializationError");
+        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         jstring message = env->NewStringUTF("Failed to initialize VkCommandPool");
-        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message);
+        jint jresult = static_cast<jint>(result);
+        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, jresult);
         env->Throw(static_cast<jthrowable>(exceptionObject));
     }
 }
@@ -402,12 +412,14 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_allocateC
 
     command_buffers.resize(swapchain_images_count);
 
-    if (vkAllocateCommandBuffers(device, &command_buffer_allocate_info, command_buffers.data()))
+    VkResult result = vkAllocateCommandBuffers(device, &command_buffer_allocate_info, command_buffers.data());
+    if (result != VK_SUCCESS)
     {
-        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkInitializationError");
+        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         jstring message = env->NewStringUTF("Failed to initialize VkCommandBuffer");
-        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message);
+        jint jresult = static_cast<jint>(result);
+        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, jresult);
         env->Throw(static_cast<jthrowable>(exceptionObject));
     }
 }
@@ -442,12 +454,15 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createHos
         nullptr,
         host_memory_requirements[0].size + host_memory_requirements[1].size,
         VkHelper::selectMemoryIndex(physical_device_memory_properties, host_memory_requirements[0], VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)};
-    if (vkAllocateMemory(device, &memory_allocate_info, nullptr, &host_memory) != VK_SUCCESS)
+
+    VkResult result = vkAllocateMemory(device, &memory_allocate_info, nullptr, &host_memory);
+    if (result != VK_SUCCESS)
     {
-        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkInitializationError");
+        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         jstring message = env->NewStringUTF("Failed to allocate memory");
-        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message);
+        jint jresult = static_cast<jint>(result);
+        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, jresult);
         env->Throw(static_cast<jthrowable>(exceptionObject));
     }
 
@@ -491,12 +506,15 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createDev
         nullptr,
         device_memory_requirements[0].size + device_memory_requirements[1].size,
         VkHelper::selectMemoryIndex(physical_device_memory_properties, device_memory_requirements[0], VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)};
-    if (vkAllocateMemory(device, &memory_allocate_info, nullptr, &device_memory) != VK_SUCCESS)
+
+    VkResult result = vkAllocateMemory(device, &memory_allocate_info, nullptr, &device_memory);
+    if (result != VK_SUCCESS)
     {
-        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkInitializationError");
+        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         jstring message = env->NewStringUTF("Failed to allocate memory");
-        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message);
+        jint jresult = static_cast<jint>(result);
+        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, jresult);
         env->Throw(static_cast<jthrowable>(exceptionObject));
     }
 
@@ -799,12 +817,14 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createPip
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 
-    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipeline_layout) != VK_SUCCESS)
+    VkResult result = vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipeline_layout);
+    if (result != VK_SUCCESS)
     {
-        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkInitializationError");
+        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         jstring message = env->NewStringUTF("Failed to initializate VkPipelineLayout");
-        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message);
+        jint jresult = static_cast<jint>(result);
+        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, jresult);
         env->Throw(static_cast<jthrowable>(exceptionObject));
         return;
     }
@@ -823,12 +843,14 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createPip
     pipelineInfo.renderPass = render_pass;
     pipelineInfo.subpass = 0;
 
-    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS)
+    VkResult a_result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline);
+    if (a_result != VK_SUCCESS)
     {
-        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkInitializationError");
+        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         jstring message = env->NewStringUTF("Failed to initializate VkPipeline");
-        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message);
+        jint jresult = static_cast<jint>(a_result);
+        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, jresult);
         env->Throw(static_cast<jthrowable>(exceptionObject));
         return;
     }
@@ -964,10 +986,11 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_render(JN
     VkResult res = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, semaphores[0], VK_NULL_HANDLE, &image_index);
     if (res != VK_SUCCESS)
     {
-        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkInitializationError");
+        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         jstring message = env->NewStringUTF("unknown");
-        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message);
+        jint jresult = static_cast<jint>(res);
+        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, jresult);
         env->Throw(static_cast<jthrowable>(exceptionObject));
     }
 
@@ -992,13 +1015,15 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_render(JN
         1,
         &swapchain,
         &image_index};
+
     res = vkQueuePresentKHR(queue, &present_info);
     if (res != VK_SUCCESS)
     {
-        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkInitializationError");
+        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         jstring message = env->NewStringUTF("unknown");
-        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message);
+        jint jresult = static_cast<jint>(res);
+        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, jresult);
         env->Throw(static_cast<jthrowable>(exceptionObject));
     }
 }
