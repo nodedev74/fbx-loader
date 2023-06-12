@@ -7,30 +7,49 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 
+/**
+ * The ShaderLoader class provides methods for loading shader files in Java.
+ */
 public class ShaderLoader {
-    public static String load(String shaderName) {
+
+    /**
+     * Loads a shader file and returns the absolute path of the temporary file
+     * created.
+     *
+     * @param shaderName The name of the shader file.
+     * @return The absolute path of the loaded shader file.
+     * @throws IOException If an I/O error occurs during the loading process.
+     */
+    public static String load(String shaderName) throws Exception {
         URL path = NativeLoader.class.getClassLoader().getResource("shaders/" + shaderName + ".spv");
-        File tempFile = null;
-        try {
-            tempFile = createTempFile(path);
-        } catch (IOException e) {
-            System.err.println("Fehler beim Erstellen der temporären Datei: " + e.getMessage());
-        }
+        File tempFile = createTempFile(path);
         return tempFile.getAbsolutePath();
     }
 
+    /**
+     * Creates a temporary file based on the given URL path.
+     *
+     * @param path The URL of the shader file.
+     * @return The created temporary file.
+     * @throws IOException If an I/O error occurs during file creation.
+     */
     private static File createTempFile(URL path) throws IOException {
         File tempFile = File.createTempFile("shdr", ".spv");
         writeTempFile(path, tempFile);
         return tempFile;
     }
 
+    /**
+     * Writes the contents of the given URL to the specified temporary file.
+     *
+     * @param path     The URL of the shader file.
+     * @param tempFile The temporary file to write to.
+     * @throws IOException If an I/O error occurs during file writing.
+     */
     private static void writeTempFile(URL path, File tempFile) throws IOException {
         try (OutputStream outputStream = new FileOutputStream(tempFile);
                 InputStream inputStream = path.openStream()) {
-            byte[] allBytes = inputStream.readAllBytes();
-            outputStream.write(allBytes);
-
+            outputStream.write(inputStream.readAllBytes());
             outputStream.close();
             inputStream.close();
         }

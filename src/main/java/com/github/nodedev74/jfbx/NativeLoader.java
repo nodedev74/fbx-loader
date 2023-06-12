@@ -6,51 +6,52 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
-import java.nio.file.Path;
 
+/**
+ * The NativeLoader class provides methods for loading native libraries in Java.
+ */
 public class NativeLoader {
 
-    public static void load(String libName) {
+    /**
+     * This method copies an internal native library into the Windows temporary
+     * directory and links the native library with the JVM.
+     *
+     * @param libName The name of the library.
+     * @throws Exception If an error occurs during the loading process.
+     */
+    public static void load(String libName) throws Exception {
         URL path = NativeLoader.class.getClassLoader().getResource("native/" + libName + ".dll");
-        File tempFile;
-        try {
-            tempFile = createTempFile(path);
-        } catch (IOException e) {
-            System.err.println("Fehler beim Erstellen der temporären Datei: " + e.getMessage());
-            return;
-        }
-        loadLibrary(tempFile);
+        File tempFile = createTempFile(path);
+        System.load(tempFile.getAbsolutePath());
     }
 
+    /**
+     * This method creates a temporary file based on the given URL path.
+     *
+     * @param path The URL of the native library.
+     * @return The created temporary file.
+     * @throws IOException If an I/O error occurs during file creation.
+     */
     private static File createTempFile(URL path) throws IOException {
-        String libPath = System.getProperty("java.library.path");
-        String tmpDir = System.getProperty("java.io.tmpdir");
-        Path target = (libPath == null || libPath.isEmpty()) ? Path.of(libPath) : Path.of(tmpDir);
-
-        File tempFile = File.createTempFile("lib", ".dll", target.toFile());
+        File tempFile = File.createTempFile("lib", ".dll");
         writeTempFile(path, tempFile);
-
         return tempFile;
     }
 
+    /**
+     * This method writes the contents of the given URL to the specified temporary
+     * file.
+     *
+     * @param path     The URL of the native library.
+     * @param tempFile The temporary file to write to.
+     * @throws IOException If an I/O error occurs during file writing.
+     */
     private static void writeTempFile(URL path, File tempFile) throws IOException {
         try (OutputStream outputStream = new FileOutputStream(tempFile);
                 InputStream inputStream = path.openStream()) {
-            byte[] allBytes = inputStream.readAllBytes();
-            outputStream.write(allBytes);
-
+            outputStream.write(inputStream.readAllBytes());
             outputStream.close();
             inputStream.close();
-        }
-    }
-
-    private static void loadLibrary(File tempFile) {
-        try {
-            System.load(tempFile.getAbsolutePath());
-        } catch (UnsatisfiedLinkError e) {
-            System.err.println("Fehler beim Laden der Bibliothek: " + e.getMessage());
-        } catch (SecurityException e) {
-            System.err.println("Sicherheitsverletzung beim Laden der Bibliothek: " + e.getMessage());
         }
     }
 }
