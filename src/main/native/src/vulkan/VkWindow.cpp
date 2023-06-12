@@ -39,14 +39,13 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkWindow_destroy(JN
     jlong sdlWindowPtr = env->GetLongField(obj, sdlWindowPtrFieldID);
     SDL_Window *window = reinterpret_cast<SDL_Window *>(sdlWindowPtr);
 
-    jfieldID vkHandlerFieldID = env->GetFieldID(cls, "handler", "J");
+    jfieldID vkHandlerFieldID = env->GetFieldID(cls, "handler", "Lcom/github/nodedev74/jfbx/vulkan/VkHandler;");
     jobject vkHandlerObject = env->GetObjectField(obj, vkHandlerFieldID);
     jclass vkHandlerClass = env->GetObjectClass(vkHandlerObject);
 
     jmethodID dmethodID = env->GetMethodID(vkHandlerClass, "destroy", "()V");
     env->CallVoidMethod(vkHandlerObject, dmethodID);
 
-    SDL_DestroyWindow(window);
     SDL_Vulkan_UnloadLibrary();
     SDL_Quit();
 
@@ -113,11 +112,13 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkWindow_run(JNIEnv
             switch (event.window.event)
             {
             case SDL_WINDOWEVENT_CLOSE:
+            {
                 jclass cls = env->GetObjectClass(obj);
                 jmethodID methodID = env->GetMethodID(cls, "destroy", "()V");
 
                 env->CallVoidMethod(obj, methodID);
                 break;
+            }
             }
         }
     }
