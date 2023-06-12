@@ -1,3 +1,14 @@
+/**
+ * @file VkHelper.hpp
+ * @author Lenard Büsing (nodedev74@gmail.com)
+ * @brief Contains helper functions for Vulkan operations.
+ * @version 0.1
+ * @date 2023-06-12
+ *
+ * @copyright Copyright (c) 2023 Lenard Büsing
+ *
+ */
+
 #ifndef VK_HELPER_HPP
 #define VK_HELPER_HPP
 
@@ -12,80 +23,80 @@
 namespace VkHelper
 {
     /**
-     * @brief
+     * @brief Selects the presentation mode for a Vulkan surface.
      *
-     * @param presentation_modes
-     * @param desired_presentation_mode
-     * @return VkPresentModeKHR
+     * @param presentationModes The available presentation modes.
+     * @param desiredPresentationMode The desired presentation mode.
+     * @return The selected presentation mode.
      */
-    VkPresentModeKHR selectPresentationMode(const std::vector<VkPresentModeKHR> &presentation_modes, VkPresentModeKHR desired_presentation_mode);
+    VkPresentModeKHR selectPresentationMode(const std::vector<VkPresentModeKHR> &presentationModes, VkPresentModeKHR desiredPresentationMode);
 
     /**
-     * @brief
+     * @brief Selects the number of images for a Vulkan surface.
      *
-     * @param surface_capabilities
-     * @return uint32_t
+     * @param surfaceCapabilities The capabilities of the surface.
+     * @return The selected number of images.
      */
-    uint32_t selectNumberOfImages(const VkSurfaceCapabilitiesKHR &surface_capabilities);
+    uint32_t selectNumberOfImages(const VkSurfaceCapabilitiesKHR &surfaceCapabilities);
 
     /**
-     * @brief
+     * @brief Selects the size of images for a Vulkan surface.
      *
-     * @param surface_capabilities
-     * @param desired_size_of_images
-     * @return VkExtent2D
+     * @param surfaceCapabilities The capabilities of the surface.
+     * @param desiredSizeOfImages The desired size of the images.
+     * @return The selected size of images.
      */
-    VkExtent2D selectSizeOfImages(const VkSurfaceCapabilitiesKHR &surface_capabilities, VkExtent2D desired_size_of_images);
+    VkExtent2D selectSizeOfImages(const VkSurfaceCapabilitiesKHR &surfaceCapabilities, VkExtent2D desiredSizeOfImages);
 
     /**
-     * @brief
+     * @brief Selects the image usage flags for a Vulkan surface.
      *
-     * @param surface_capabilities
-     * @param desired_usages
-     * @return VkImageUsageFlags
+     * @param surfaceCapabilities The capabilities of the surface.
+     * @param desiredUsages The desired image usage flags.
+     * @return The selected image usage flags.
      */
-    VkImageUsageFlags selectImageUsage(const VkSurfaceCapabilitiesKHR &surface_capabilities, VkImageUsageFlags desired_usages);
+    VkImageUsageFlags selectImageUsage(const VkSurfaceCapabilitiesKHR &surfaceCapabilities, VkImageUsageFlags desiredUsages);
 
     /**
-     * @brief
+     * @brief Selects the surface transform flag bits for a Vulkan surface.
      *
-     * @param surface_capabilities
-     * @param desired_transform
-     * @return VkSurfaceTransformFlagBitsKHR
+     * @param surfaceCapabilities The capabilities of the surface.
+     * @param desiredTransform The desired surface transform flag bits.
+     * @return The selected surface transform flag bits.
      */
-    VkSurfaceTransformFlagBitsKHR selectSurfaceTransform(const VkSurfaceCapabilitiesKHR &surface_capabilities, VkSurfaceTransformFlagBitsKHR desired_transform);
+    VkSurfaceTransformFlagBitsKHR selectSurfaceTransform(const VkSurfaceCapabilitiesKHR &surfaceCapabilities, VkSurfaceTransformFlagBitsKHR desiredTransform);
 
     /**
-     * @brief
+     * @brief Selects the surface format for a Vulkan surface.
      *
-     * @param surface_formats
-     * @param desired_surface_format
-     * @return VkSurfaceFormatKHR
+     * @param surfaceFormats The available surface formats.
+     * @param desiredSurfaceFormat The desired surface format.
+     * @return The selected surface format.
      */
-    VkSurfaceFormatKHR selectSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &surface_formats, VkSurfaceFormatKHR desired_surface_format);
+    VkSurfaceFormatKHR selectSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &surfaceFormats, VkSurfaceFormatKHR desiredSurfaceFormat);
 
     /**
-     * @brief
+     * @brief Selects the memory index for a Vulkan memory allocation.
      *
-     * @param physical_device_memory_properties
-     * @param memory_requirements
-     * @param memory_properties
-     * @return uint32_t
+     * @param physicalDeviceMemoryProperties The properties of the physical device memory.
+     * @param memoryRequirements The memory requirements for the allocation.
+     * @param memoryProperties The desired memory property flags.
+     * @return The selected memory index.
      */
-    uint32_t selectMemoryIndex(const VkPhysicalDeviceMemoryProperties &physical_device_memory_properties, const VkMemoryRequirements &memory_requirements, VkMemoryPropertyFlagBits memory_properties);
+    uint32_t selectMemoryIndex(const VkPhysicalDeviceMemoryProperties &physicalDeviceMemoryProperties, const VkMemoryRequirements &memoryRequirements, VkMemoryPropertyFlagBits memoryProperties);
 
     /**
-     * @brief
+     * @brief Debug callback function for Vulkan validation layers.
      *
-     * @param flags
-     * @param objType
-     * @param srcObject
-     * @param location
-     * @param msgCode
-     * @param pLayerPrefix
-     * @param pMsg
-     * @param pUserData
-     * @return VkBool32
+     * @param flags The flags associated with the debug report.
+     * @param objType The type of the Vulkan object associated with the debug report.
+     * @param srcObject The source object of the debug report.
+     * @param location The location associated with the debug report.
+     * @param msgCode The message code of the debug report.
+     * @param pLayerPrefix The prefix of the validation layer.
+     * @param pMsg The debug message.
+     * @param pUserData User-defined data pointer.
+     * @return VK_FALSE.
      */
     VkBool32 debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject, size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *pUserData);
 }

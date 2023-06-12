@@ -1,175 +1,188 @@
+/**
+ * @file VkHelper.cpp
+ * @author Lenard Büsing (nodedev74@gmail.com)
+ * @brief Contains helper functions for Vulkan operations.
+ * @version 0.1
+ * @date 2023-06-12
+ *
+ * @copyright Copyright (c) 2023 Lenard Büsing
+ *
+ */
+
 #include "vulkan/VkHelper.hpp"
 
+using namespace VkHelper;
+
 /**
- * @brief
+ * @brief Selects the presentation mode for a Vulkan surface.
  *
- * @param presentation_modes
- * @param desired_presentation_mode
- * @return VkPresentModeKHR
+ * @param presentationModes The available presentation modes.
+ * @param desiredPresentationMode The desired presentation mode.
+ * @return The selected presentation mode.
  */
-VkPresentModeKHR VkHelper::selectPresentationMode(const std::vector<VkPresentModeKHR> &presentation_modes, VkPresentModeKHR desired_presentation_mode)
+VkPresentModeKHR selectPresentationMode(const std::vector<VkPresentModeKHR> &presentationModes, VkPresentModeKHR desiredPresentationMode)
 {
-    VkPresentModeKHR selected_present_mode;
-    if (std::find(presentation_modes.begin(), presentation_modes.end(), desired_presentation_mode) != presentation_modes.end())
+    VkPresentModeKHR selectedPresentMode;
+    if (std::find(presentationModes.begin(), presentationModes.end(), desiredPresentationMode) != presentationModes.end())
     {
-        selected_present_mode = VK_PRESENT_MODE_MAILBOX_KHR;
+        selectedPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
     }
     else
     {
-        selected_present_mode = VK_PRESENT_MODE_FIFO_KHR;
+        selectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
     }
-    return selected_present_mode;
+    return selectedPresentMode;
 }
 
 /**
- * @brief
+ * @brief Selects the number of images for a Vulkan surface.
  *
- * @param surface_capabilities
- * @return uint32_t
+ * @param surfaceCapabilities The capabilities of the surface.
+ * @return The selected number of images.
  */
-uint32_t VkHelper::selectNumberOfImages(const VkSurfaceCapabilitiesKHR &surface_capabilities)
+uint32_t selectNumberOfImages(const VkSurfaceCapabilitiesKHR &surfaceCapabilities)
 {
-    uint32_t number_of_images = surface_capabilities.minImageCount + 1;
-    if ((surface_capabilities.maxImageCount > 0) && (number_of_images > surface_capabilities.maxImageCount))
+    uint32_t numberOfImages = surfaceCapabilities.minImageCount + 1;
+    if ((surfaceCapabilities.maxImageCount > 0) && (numberOfImages > surfaceCapabilities.maxImageCount))
     {
-        number_of_images = surface_capabilities.maxImageCount;
+        numberOfImages = surfaceCapabilities.maxImageCount;
     }
-    return number_of_images;
+    return numberOfImages;
 }
 
 /**
- * @brief
+ * @brief Selects the size of images for a Vulkan surface.
  *
- * @param surface_capabilities
- * @param desired_size_of_images
- * @return VkExtent2D
+ * @param surfaceCapabilities The capabilities of the surface.
+ * @param desiredSizeOfImages The desired size of the images.
+ * @return The selected size of images.
  */
-VkExtent2D VkHelper::selectSizeOfImages(const VkSurfaceCapabilitiesKHR &surface_capabilities, VkExtent2D desired_size_of_images)
+VkExtent2D selectSizeOfImages(const VkSurfaceCapabilitiesKHR &surfaceCapabilities, VkExtent2D desiredSizeOfImages)
 {
-    if (0xFFFFFFFF == surface_capabilities.currentExtent.width)
+    if (0xFFFFFFFF == surfaceCapabilities.currentExtent.width)
     {
 
-        if (desired_size_of_images.width < surface_capabilities.minImageExtent.width)
+        if (desiredSizeOfImages.width < surfaceCapabilities.minImageExtent.width)
         {
-            desired_size_of_images.width = surface_capabilities.minImageExtent.width;
+            desiredSizeOfImages.width = surfaceCapabilities.minImageExtent.width;
         }
-        else if (desired_size_of_images.width > surface_capabilities.maxImageExtent.width)
+        else if (desiredSizeOfImages.width > surfaceCapabilities.maxImageExtent.width)
         {
-            desired_size_of_images.width = surface_capabilities.maxImageExtent.width;
+            desiredSizeOfImages.width = surfaceCapabilities.maxImageExtent.width;
         }
 
-        if (desired_size_of_images.height < surface_capabilities.minImageExtent.height)
+        if (desiredSizeOfImages.height < surfaceCapabilities.minImageExtent.height)
         {
-            desired_size_of_images.height = surface_capabilities.minImageExtent.height;
+            desiredSizeOfImages.height = surfaceCapabilities.minImageExtent.height;
         }
-        else if (desired_size_of_images.height > surface_capabilities.maxImageExtent.height)
+        else if (desiredSizeOfImages.height > surfaceCapabilities.maxImageExtent.height)
         {
-            desired_size_of_images.height = surface_capabilities.maxImageExtent.height;
+            desiredSizeOfImages.height = surfaceCapabilities.maxImageExtent.height;
         }
     }
     else
     {
-        desired_size_of_images = surface_capabilities.currentExtent;
+        desiredSizeOfImages = surfaceCapabilities.currentExtent;
     }
-    return desired_size_of_images;
+    return desiredSizeOfImages;
 }
 
 /**
- * @brief
+ * @brief Selects the image usage flags for a Vulkan surface.
  *
- * @param surface_capabilities
- * @param desired_usages
- * @return VkImageUsageFlags
+ * @param surfaceCapabilities The capabilities of the surface.
+ * @param desiredUsages The desired image usage flags.
+ * @return The selected image usage flags.
  */
-VkImageUsageFlags VkHelper::selectImageUsage(const VkSurfaceCapabilitiesKHR &surface_capabilities, VkImageUsageFlags desired_usages)
+VkImageUsageFlags selectImageUsage(const VkSurfaceCapabilitiesKHR &surfaceCapabilities, VkImageUsageFlags desiredUsages)
 {
-    VkImageUsageFlags image_usage;
-    image_usage = desired_usages & surface_capabilities.supportedUsageFlags;
-    if (desired_usages != image_usage)
+    VkImageUsageFlags imageUsage;
+    imageUsage = desiredUsages & surfaceCapabilities.supportedUsageFlags;
+    if (desiredUsages != imageUsage)
     {
-        image_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     }
-    return image_usage;
+    return imageUsage;
 }
 
 /**
- * @brief
+ * @brief Selects the surface transform flag bits for a Vulkan surface.
  *
- * @param surface_capabilities
- * @param desired_transform
- * @return VkSurfaceTransformFlagBitsKHR
+ * @param surfaceCapabilities The capabilities of the surface.
+ * @param desiredTransform The desired surface transform flag bits.
+ * @return The selected surface transform flag bits.
  */
-VkSurfaceTransformFlagBitsKHR VkHelper::selectSurfaceTransform(const VkSurfaceCapabilitiesKHR &surface_capabilities, VkSurfaceTransformFlagBitsKHR desired_transform)
+VkSurfaceTransformFlagBitsKHR selectSurfaceTransform(const VkSurfaceCapabilitiesKHR &surfaceCapabilities, VkSurfaceTransformFlagBitsKHR desiredTransform)
 {
-    VkSurfaceTransformFlagBitsKHR surface_transform;
-    if (surface_capabilities.supportedTransforms & desired_transform)
+    VkSurfaceTransformFlagBitsKHR surfaceTransform;
+    if (surfaceCapabilities.supportedTransforms & desiredTransform)
     {
-        surface_transform = desired_transform;
+        surfaceTransform = desiredTransform;
     }
     else
     {
-        surface_transform = surface_capabilities.currentTransform;
+        surfaceTransform = surfaceCapabilities.currentTransform;
     }
-    return surface_transform;
+    return surfaceTransform;
 }
 
 /**
- * @brief
+ * @brief Selects the surface format for a Vulkan surface.
  *
- * @param surface_formats
- * @param desired_surface_format
- * @return VkSurfaceFormatKHR
+ * @param surfaceFormats The available surface formats.
+ * @param desiredSurfaceFormat The desired surface format.
+ * @return The selected surface format.
  */
-VkSurfaceFormatKHR VkHelper::selectSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &surface_formats, VkSurfaceFormatKHR desired_surface_format)
+VkSurfaceFormatKHR selectSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &surfaceFormats, VkSurfaceFormatKHR desiredSurfaceFormat)
 {
-    VkSurfaceFormatKHR selected_surface_format;
-    if ((1 == surface_formats.size()) &&
-        (VK_FORMAT_UNDEFINED == surface_formats[0].format))
+    VkSurfaceFormatKHR selectedSurfaceFormat;
+    if ((1 == surfaceFormats.size()) &&
+        (VK_FORMAT_UNDEFINED == surfaceFormats[0].format))
     {
-        selected_surface_format.format = desired_surface_format.format;
-        selected_surface_format.colorSpace = desired_surface_format.colorSpace;
-        return selected_surface_format;
+        selectedSurfaceFormat.format = desiredSurfaceFormat.format;
+        selectedSurfaceFormat.colorSpace = desiredSurfaceFormat.colorSpace;
+        return selectedSurfaceFormat;
     }
 
-    for (auto &surface_format : surface_formats)
+    for (auto &surfaceFormat : surfaceFormats)
     {
-        if ((desired_surface_format.format == surface_format.format) &&
-            (desired_surface_format.colorSpace == surface_format.colorSpace))
+        if ((desiredSurfaceFormat.format == surfaceFormat.format) &&
+            (desiredSurfaceFormat.colorSpace == surfaceFormat.colorSpace))
         {
-            selected_surface_format.format = desired_surface_format.format;
-            selected_surface_format.colorSpace = desired_surface_format.colorSpace;
-            return surface_format;
+            selectedSurfaceFormat.format = desiredSurfaceFormat.format;
+            selectedSurfaceFormat.colorSpace = desiredSurfaceFormat.colorSpace;
+            return surfaceFormat;
         }
     }
 
-    for (auto &surface_format : surface_formats)
+    for (auto &surfaceFormat : surfaceFormats)
     {
-        if ((desired_surface_format.format == surface_format.format))
+        if ((desiredSurfaceFormat.format == surfaceFormat.format))
         {
-            selected_surface_format.format = desired_surface_format.format;
-            selected_surface_format.colorSpace = surface_format.colorSpace;
-            return selected_surface_format;
+            selectedSurfaceFormat.format = desiredSurfaceFormat.format;
+            selectedSurfaceFormat.colorSpace = desiredSurfaceFormat.colorSpace;
+            return selectedSurfaceFormat;
         }
     }
 
-    selected_surface_format = surface_formats[0];
-    return selected_surface_format;
+    selectedSurfaceFormat = surfaceFormats[0];
+    return selectedSurfaceFormat;
 }
 
 /**
- * @brief
+ * @brief Selects the memory index for a Vulkan memory allocation.
  *
- * @param physical_device_memory_properties
- * @param memory_requirements
- * @param memory_properties
- * @return uint32_t
+ * @param physicalDeviceMemoryProperties The properties of the physical device memory.
+ * @param memoryRequirements The memory requirements for the allocation.
+ * @param memoryProperties The desired memory property flags.
+ * @return The selected memory index.
  */
-uint32_t VkHelper::selectMemoryIndex(const VkPhysicalDeviceMemoryProperties &physical_device_memory_properties, const VkMemoryRequirements &memory_requirements, VkMemoryPropertyFlagBits memory_properties)
+uint32_t selectMemoryIndex(const VkPhysicalDeviceMemoryProperties &physicalDeviceMemoryProperties, const VkMemoryRequirements &memoryRequirements, VkMemoryPropertyFlagBits memoryProperties)
 {
-    for (uint32_t type = 0; type < physical_device_memory_properties.memoryTypeCount; ++type)
+    for (uint32_t type = 0; type < physicalDeviceMemoryProperties.memoryTypeCount; ++type)
     {
-        if ((memory_requirements.memoryTypeBits & (1 << type)) &&
-            ((physical_device_memory_properties.memoryTypes[type].propertyFlags & memory_properties) == memory_properties))
+        if ((memoryRequirements.memoryTypeBits & (1 << type)) &&
+            ((physicalDeviceMemoryProperties.memoryTypes[type].propertyFlags & memoryProperties) == memoryProperties))
         {
             return type;
         }
@@ -178,19 +191,19 @@ uint32_t VkHelper::selectMemoryIndex(const VkPhysicalDeviceMemoryProperties &phy
 }
 
 /**
- * @brief
+ * @brief Debug callback function for Vulkan validation layers.
  *
- * @param flags
- * @param objType
- * @param srcObject
- * @param location
- * @param msgCode
- * @param pLayerPrefix
- * @param pMsg
- * @param pUserData
- * @return VkBool32
+ * @param flags The flags associated with the debug report.
+ * @param objType The type of the Vulkan object associated with the debug report.
+ * @param srcObject The source object of the debug report.
+ * @param location The location associated with the debug report.
+ * @param msgCode The message code of the debug report.
+ * @param pLayerPrefix The prefix of the validation layer.
+ * @param pMsg The debug message.
+ * @param pUserData User-defined data pointer.
+ * @return VK_FALSE.
  */
-VkBool32 VkHelper::debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject, size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *pUserData)
+VkBool32 debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject, size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *pUserData)
 {
     if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
     {
