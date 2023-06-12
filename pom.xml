@@ -202,7 +202,7 @@
                             <arguments>
                                 <argument>-shared</argument>
                                 <argument>-o</argument>
-                                <argument>${project.basedir}/src/main/resources/native/libhello.dll</argument>
+                                <argument>${project.basedir}/src/main/resources/native/libvulkan.dll</argument>
                                 <argument>VkHelper.o</argument>
                                 <argument>VkHandler.o</argument>
                                 <argument>VkWindow.o</argument>
