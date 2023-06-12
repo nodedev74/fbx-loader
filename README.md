@@ -1,6 +1,6 @@
 # JVulkan Triangle
 
-This project provides a method for creating a Vulkan window in Java that renders a "Hello-Triangle."
+This project provides a method for creating a Vulkan window in Java that renders a "Hello-Triangle".
 
 ## Environment
 
