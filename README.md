@@ -7,10 +7,13 @@ This project provides a method for creating a Vulkan window in Java that renders
 * Windows (x64) supported only
 * Apache Maven 3.9.1
 * Java Runtime Environment 19
+* MinGW-64, gcc 12.2.0
 * VulkanSDK 1.3.250.0
   * SDL2 libraries and headers
   * Volk header, source and library
   * Vulkan Memory Allocator header
+
+## Build the project
 
 ```shell
 mvn clean package
