@@ -14,6 +14,9 @@
 
 *.class
 
+**/resources/native
+**/resources/shaders
+
 com_github_nodedev74_jfbx_*.h
 
 **/validation_output.txt
