@@ -6,20 +6,19 @@
 
 /target
 
+# Build
+
 *.log
 
 *.dll
 
-# Java
-
-*.class
-
-**/resources/native
-**/resources/shaders
-
 com_github_nodedev74_jfbx_*.h
 
 **/validation_output.txt
+
+# Java
+
+*.class
 
 # Draw.io
 
@@ -27,3 +26,7 @@ com_github_nodedev74_jfbx_*.h
 **/*.drawio.dtmp
 
 **/*.drawio.pdf
+
+# Vulkan
+
+**/*.spv
