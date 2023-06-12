@@ -1,6 +1,5 @@
 package com.github.nodedev74.jfbx.application;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -15,17 +14,16 @@ public abstract class Application implements AppilcationInterface {
     public static Stage currentStage;
 
     public static void launch(Class<? extends Application> app) {
-        NativeLoader.load("libhello");
         try {
+            NativeLoader.load("libvulkan");
             currentStage = new Stage();
             Application application = app.getDeclaredConstructor().newInstance();
 
             application.start();
             Application.lifecycle();
             application.stop();
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-                | NoSuchMethodException | SecurityException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
