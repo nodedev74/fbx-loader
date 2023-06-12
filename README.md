@@ -13,7 +13,7 @@ This project provides a method for creating a Vulkan window in Java that renders
   * Vulkan Memory Allocator header
 
 ```shell
-mvn clean test
+mvn clean package
 ```
 
 ## Known issues
