@@ -275,9 +275,9 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createLog
         &selected_device_features};
 
     VkResult result = vkCreateDevice(physical_device, &device_create_info, nullptr, &device);
-    if (result != VK_SUCCESS)
+    if (result == VK_SUCCESS)
     {
-        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkInitializationError");
+        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         jstring message = env->NewStringUTF("Failed to initialize VkDevice");
         jint jresult = static_cast<jint>(result);
