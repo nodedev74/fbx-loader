@@ -1,18 +1,28 @@
+/**
+ * @file VkWindow.cpp
+ * @author Lenard Büsing (nodedev74@gmail.com)
+ * @brief Vulkan window based on SDLWindow
+ * @version 0.1
+ * @date 2023-06-13
+ *
+ * @copyright Copyright (c) 2023 Lenard Büsing
+ *
+ */
+
 #include "com_github_nodedev74_jfbx_vulkan_VkWindow.h"
 #include <jni.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
 
-#define APP_NAME "JFXB Viewer"
-
 /**
- * @brief
+ * @brief JNI function to create a Vulkan window.
  *
- * @param env
- * @param obj
- * @param width
- * @param height
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
+ * @param width The width of the window.
+ * @param height The height of the window.
+ * @return The pointer to the created SDLWindow as a jlong value.
  */
 JNIEXPORT jlong JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkWindow_create(JNIEnv *env, jobject obj, jint width, jint height)
 {
@@ -26,10 +36,10 @@ JNIEXPORT jlong JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkWindow_create(JN
 }
 
 /**
- * @brief
+ * @brief JNI function to destroy a Vulkan window.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkWindow_destroy(JNIEnv *env, jobject obj)
 {
@@ -54,10 +64,10 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkWindow_destroy(JN
 }
 
 /**
- * @brief
+ * @brief JNI function to show a Vulkan window.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkWindow_show(JNIEnv *env, jobject obj)
 {
@@ -71,10 +81,10 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkWindow_show(JNIEn
 }
 
 /**
- * @brief
+ * @brief JNI function to hide a Vulkan window.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkWindow_hide(JNIEnv *env, jobject obj)
 {
@@ -88,11 +98,11 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkWindow_hide(JNIEn
 }
 
 /**
- * @brief
+ * @brief JNI function run the lifecycle of the SDLWindow
  *
- * @param env
- * @param obj
- * @param sdlWindowPtr
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
+ * @param sdlWindowPtr The pointer to the SDLWindow as a jlong value.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkWindow_run(JNIEnv *env, jobject obj, jlong sdlWindowPtr)
 {
