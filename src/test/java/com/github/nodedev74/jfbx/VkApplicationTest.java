@@ -9,6 +9,6 @@ public class VkApplicationTest extends Application {
     public void start() {
         VkWindow vkWindow = new VkWindow(800, 800);
         vkWindow.show();
-        Application.currentStage.children.add(vkWindow);
+        Application.currentStage.addChildren(vkWindow);
     }
 }

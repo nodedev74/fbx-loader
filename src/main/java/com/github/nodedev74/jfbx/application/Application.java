@@ -59,7 +59,7 @@ public abstract class Application implements AppilcationInterface {
         long startTime = System.currentTimeMillis();
 
         while (isRunning) {
-            ArrayList<? super Control> children = currentStage.children;
+            ArrayList<? super Control> children = currentStage.getChildren();
             if (!children.isEmpty()) {
                 Iterator<? super Control> iterator = children.iterator();
                 while (iterator.hasNext()) {
