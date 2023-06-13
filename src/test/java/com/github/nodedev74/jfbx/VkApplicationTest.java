@@ -7,9 +7,8 @@ public class VkApplicationTest extends Application {
 
     @Override
     public void start() {
-        VkWindow win = new VkWindow(800, 800);
-        win.show();
-
-        Application.currentStage.children.add(win);
+        VkWindow vkWindow = new VkWindow(800, 800);
+        vkWindow.show();
+        Application.currentStage.children.add(vkWindow);
     }
 }
