@@ -22,3 +22,4 @@ mvn clean package
 ## Known issues
 
 * The JNILoader & ShaderLoader are creating files in the Windows temporary directory that are not automatically deleted. This issue arises due to the lack of support in JNI for unlinking libraries at runtime. Migrating to JNA would resolve this problem, as JNA supports library unlinking. This issue leads to multiple unused temporary files that will be removed by Windows at some point.
+* Interaction with Stage is not well constructed it has to be changed when extending this sample of an Vulkan Application
