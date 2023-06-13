@@ -189,27 +189,23 @@ uint32_t VkHelper::selectMemoryIndex(const VkPhysicalDeviceMemoryProperties &phy
 }
 
 /**
- * @brief Debug callback function for Vulkan validation layers.
+ * @brief The callback
  *
- * @param flags The flags associated with the debug report.
- * @param objType The type of the Vulkan object associated with the debug report.
- * @param srcObject The source object of the debug report.
- * @param location The location associated with the debug report.
- * @param msgCode The message code of the debug report.
- * @param pLayerPrefix The prefix of the validation layer.
- * @param pMsg The debug message.
+ * @param messageSeverity The severity of the message.
+ * @param messageType The type of the message.
+ * @param pCallbackData The callback data containing information about the message.
  * @param pUserData User-defined data pointer.
- * @return VK_FALSE.
+ * @return VkBool32 A value indicating whether the execution of the Vulkan function should continue.
  */
-VkBool32 VkHelper::debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject, size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *pUserData)
+VKAPI_ATTR VkBool32 VKAPI_CALL VkHelper::DebugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageType,
+    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+    void *pUserData)
 {
-    if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
-    {
-        std::cerr << "ERROR: [" << pLayerPrefix << "] Code " << msgCode << " : " << pMsg << std::endl;
-    }
-    else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
-    {
-        std::cerr << "WARNING: [" << pLayerPrefix << "] Code " << msgCode << " : " << pMsg << std::endl;
-    }
+    validationOutputFile << pCallbackData->pMessage << std::endl;
+
+    std::cout << pCallbackData->pMessage << std::endl;
+
     return VK_FALSE;
 }

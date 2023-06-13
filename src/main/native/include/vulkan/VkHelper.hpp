@@ -16,12 +16,16 @@
 
 #include <vulkan/vulkan.hpp>
 
+#include <fstream>
+#include <string>
 #include <iostream>
 #include <vector>
 #include <algorithm>
 
 namespace VkHelper
 {
+    static std::ofstream validationOutputFile;
+
     /**
      * @brief Selects the presentation mode for a Vulkan surface.
      *
@@ -86,19 +90,19 @@ namespace VkHelper
     uint32_t selectMemoryIndex(const VkPhysicalDeviceMemoryProperties &physicalDeviceMemoryProperties, const VkMemoryRequirements &memoryRequirements, VkMemoryPropertyFlagBits memoryProperties);
 
     /**
-     * @brief Debug callback function for Vulkan validation layers.
+     * @brief The callback
      *
-     * @param flags The flags associated with the debug report.
-     * @param objType The type of the Vulkan object associated with the debug report.
-     * @param srcObject The source object of the debug report.
-     * @param location The location associated with the debug report.
-     * @param msgCode The message code of the debug report.
-     * @param pLayerPrefix The prefix of the validation layer.
-     * @param pMsg The debug message.
+     * @param messageSeverity The severity of the message.
+     * @param messageType The type of the message.
+     * @param pCallbackData The callback data containing information about the message.
      * @param pUserData User-defined data pointer.
-     * @return VK_FALSE.
+     * @return VkBool32 A value indicating whether the execution of the Vulkan function should continue.
      */
-    VkBool32 debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject, size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *pUserData);
+    VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        VkDebugUtilsMessageTypeFlagsEXT messageType,
+        const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+        void *pUserData);
 }
 
 #endif // !VK_HELPER_HPP
