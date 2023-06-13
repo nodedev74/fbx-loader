@@ -1,7 +1,7 @@
 /**
  * @file VkWindow.cpp
  * @author Lenard Büsing (nodedev74@gmail.com)
- * @brief Vulkan window based on SDLWindow
+ * @brief Vulkan window based on SDLWindow.
  * @version 0.1
  * @date 2023-06-13
  *
