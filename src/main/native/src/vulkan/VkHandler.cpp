@@ -1,3 +1,14 @@
+/**
+ * @file VkHandler.cpp
+ * @author Lenard Büsing (nodedev74@gmail.com)
+ * @brief Contains interaction layer with Vulkan.
+ * @version 0.1
+ * @date 2023-06-13
+ *
+ * @copyright Copyright (c) 2023 Lenard Büsing
+ *
+ */
+
 #define VK_USE_PLATFORM_WIN32_KHR
 #define VOLK_IMPLEMENTATION
 
@@ -10,84 +21,67 @@
 #include "SDL2/SDL_vulkan.h"
 
 #include <glm/glm.hpp>
-#include <glm/vec3.hpp>
-#include <glm/gtx/transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #include "volk.h"
 
 #include <fstream>
+#include <chrono>
 #include <iostream>
 #include <vector>
-#include <chrono>
 #include <string>
 
-VkExtent2D window_size;
+using namespace VkHelper;
+
+VkExtent2D windowSize{};
 
 VkInstance instance;
 
 VkSurfaceKHR surface;
 VkSurfaceFormatKHR surfaceFormat;
 
-VkPhysicalDevice physical_device;
-VkPhysicalDeviceMemoryProperties physical_device_memory_properties;
-uint32_t queue_family_index;
+VkPhysicalDevice physicalDevice;
+VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
+uint32_t queueFamilyIndex;
 VkDevice device;
 VkQueue queue;
 
-VkSwapchainKHR old_swapchain = VK_NULL_HANDLE;
-VkSwapchainCreateInfoKHR swapchain_create_info;
+VkSwapchainCreateInfoKHR swapchainCreateInfo;
 VkSwapchainKHR swapchain;
-uint32_t swapchain_images_count;
-std::vector<VkImage> swapchain_images;
+uint32_t swapchainImagesCount;
+std::vector<VkImage> swapchainImages;
 
-VkCommandPool command_pool;
-std::vector<VkCommandBuffer> command_buffers;
+VkCommandPool commandPool;
+std::vector<VkCommandBuffer> commandBuffers;
 
-VkBuffer host_vertex_buffer;
-VkBuffer host_m_matrix_buffer;
-VkMemoryRequirements host_memory_requirements[2];
-VkDeviceMemory host_memory;
-void *host_data_pointer;
-VkBuffer device_vertex_buffer;
-VkBuffer device_m_matrix_buffer;
-VkMemoryRequirements device_memory_requirements[2];
-VkDeviceMemory device_memory;
+VkBuffer hostVertexBuffer;
+VkBuffer hostMatrixBuffer;
+VkMemoryRequirements hostMemoryRequirements[2];
+VkDeviceMemory hostMemory;
+void *hostDataPointer;
+VkBuffer deviceVertexBuffer;
+VkBuffer deviceMatrixBuffer;
+VkMemoryRequirements deviceMemoryRequirements[2];
+VkDeviceMemory deviceMemory;
 
-VkDescriptorPool descriptor_pool;
-VkDescriptorSetLayout descriptor_set_layout;
-VkDescriptorSet descriptor_set;
+VkDescriptorPool descriptorPool;
+VkDescriptorSetLayout descriptorSetLayout;
+VkDescriptorSet descriptorSet;
 
-VkRenderPass render_pass;
+VkRenderPass renderPass;
 std::vector<VkFramebuffer> framebuffers;
-std::vector<VkImageView> swapchain_images_views;
+std::vector<VkImageView> swapchainImagesViews;
 
-VkPipelineLayout pipeline_layout;
+VkPipelineLayout pipelineLayout;
 VkPipeline pipeline;
 
 std::vector<VkSemaphore> semaphores;
-std::vector<glm::vec3> input_data = {{-0.2f, -0.2f, 0.5f}, {0.5f, 0.8f, 0.72f}, {0.2f, -0.2f, 0.5f}, {0.0f, 0.3f, 0.1f}, {0.0f, 0.2f, 0.5f}, {0.4f, 0.1f, 0.8f}};
-
-std::ofstream validationOutputFile;
-
-VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT messageType,
-    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-    void *pUserData)
-{
-    validationOutputFile << pCallbackData->pMessage << std::endl;
-
-    std::cout << pCallbackData->pMessage << std::endl;
-
-    return VK_FALSE;
-}
+std::vector<glm::vec3> inputData = {{-0.2f, -0.2f, 0.5f}, {0.5f, 0.8f, 0.72f}, {0.2f, -0.2f, 0.5f}, {0.0f, 0.3f, 0.1f}, {0.0f, 0.2f, 0.5f}, {0.4f, 0.1f, 0.8f}};
 
 /**
- * @brief
+ * @brief Creates a Vulkan instance.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createInstance(JNIEnv *env, jobject obj)
 {
@@ -109,14 +103,14 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createIns
         return;
     }
 
-    VkResult b_result = volkInitialize();
-    if (b_result != VK_SUCCESS)
+    VkResult volkInitResult = volkInitialize();
+    if (volkInitResult != VK_SUCCESS)
     {
         jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         std::string rawMessage("Failed to initialize Volk-Loader");
         jstring message = env->NewStringUTF(rawMessage.c_str());
-        jint jresult = static_cast<jint>(b_result);
+        jint jresult = static_cast<jint>(volkInitResult);
         jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, jresult);
         env->Throw(static_cast<jthrowable>(exceptionObject));
         return;
@@ -148,8 +142,8 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createIns
     instInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
     instInfo.ppEnabledLayerNames = validationLayers.data();
 
-    VkResult a_result = vkCreateInstance(&instInfo, nullptr, &instance);
-    if (a_result != VK_SUCCESS)
+    VkResult instResult = vkCreateInstance(&instInfo, nullptr, &instance);
+    if (instResult != VK_SUCCESS)
     {
         instance = VK_NULL_HANDLE;
 
@@ -157,8 +151,8 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createIns
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         std::string rawMessage("Failed to initialize VkInstance");
         jstring message = env->NewStringUTF(rawMessage.c_str());
-        jint jresult = static_cast<jint>(a_result);
-        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, a_result);
+        jint jresult = static_cast<jint>(instResult);
+        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, jresult);
         env->Throw(static_cast<jthrowable>(exceptionObject));
         return;
     }
@@ -167,10 +161,10 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createIns
 }
 
 /**
- * @brief
+ * @brief Creates a Vulkan debugger.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createDebugger(JNIEnv *env, jobject obj)
 {
@@ -189,10 +183,10 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createDeb
 }
 
 /**
- * @brief
+ * @brief Creates a Vulkan surface for SDLWindow.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createSureface(JNIEnv *env, jobject obj)
 {
@@ -212,89 +206,91 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createSur
 }
 
 /**
- * @brief
+ * @brief Creates a logical Vulkan device.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createLogicalDevice(JNIEnv *env, jobject obj)
 {
-    uint32_t devices_number;
-    vkEnumeratePhysicalDevices(instance, &devices_number, nullptr);
-    std::vector<VkPhysicalDevice> devices(devices_number);
-    std::vector<VkPhysicalDeviceProperties> devices_properties(devices_number);
-    std::vector<VkPhysicalDeviceFeatures> devices_features(devices_number);
-    vkEnumeratePhysicalDevices(instance, &devices_number, devices.data());
+    uint32_t devicesNumber;
+    vkEnumeratePhysicalDevices(instance, &devicesNumber, nullptr);
+    std::vector<VkPhysicalDevice> devices(devicesNumber);
+    std::vector<VkPhysicalDeviceProperties> devicesProperties(devicesNumber);
+    std::vector<VkPhysicalDeviceFeatures> devicesFeatures(devicesNumber);
+    vkEnumeratePhysicalDevices(instance, &devicesNumber, devices.data());
 
     for (uint32_t i = 0; i < devices.size(); i++)
     {
-        vkGetPhysicalDeviceProperties(devices[i], &devices_properties[i]);
-        vkGetPhysicalDeviceFeatures(devices[i], &devices_features[i]);
+        vkGetPhysicalDeviceProperties(devices[i], &devicesProperties[i]);
+        vkGetPhysicalDeviceFeatures(devices[i], &devicesFeatures[i]);
     }
 
-    size_t selected_device_number = 0;
+    size_t selectedDeviceNumber = 0;
 
-    physical_device = devices[selected_device_number];
-    vkGetPhysicalDeviceMemoryProperties(physical_device, &physical_device_memory_properties);
+    physicalDevice = devices[selectedDeviceNumber];
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &physicalDeviceMemoryProperties);
 
-    uint32_t families_count;
-    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &families_count, nullptr);
-    std::vector<VkQueueFamilyProperties> queue_families_properties(families_count);
-    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &families_count, queue_families_properties.data());
+    uint32_t familiesCount;
+    vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &familiesCount, nullptr);
+    std::vector<VkQueueFamilyProperties> queueFamiliesProperties(familiesCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &familiesCount, queueFamiliesProperties.data());
 
-    queue_family_index = -1;
-    VkBool32 does_queue_family_support_surface = VK_FALSE;
-    while (does_queue_family_support_surface == VK_FALSE)
+    queueFamilyIndex = -1;
+    VkBool32 doesQueueFamilySupportSurface = VK_FALSE;
+    while (doesQueueFamilySupportSurface == VK_FALSE)
     {
-        queue_family_index++;
-        vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, queue_family_index, surface, &does_queue_family_support_surface);
+        queueFamilyIndex++;
+        vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamilyIndex, surface, &doesQueueFamilySupportSurface);
     }
 
-    std::vector<float> queue_priorities = {1.0f};
-    std::vector<VkDeviceQueueCreateInfo> queue_create_info;
-    queue_create_info.push_back({VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-                                 nullptr,
-                                 0,
-                                 static_cast<uint32_t>(queue_family_index),
-                                 static_cast<uint32_t>(queue_priorities.size()),
-                                 queue_priorities.data()});
+    std::vector<float> queuePriorities = {1.0f};
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfo;
+    queueCreateInfo.push_back(
+        {VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+         nullptr,
+         0,
+         static_cast<uint32_t>(queueFamilyIndex),
+         static_cast<uint32_t>(queuePriorities.size()),
+         queuePriorities.data()});
 
-    std::vector<const char *> desired_device_level_extensions = {"VK_KHR_swapchain"};
-    VkPhysicalDeviceFeatures selected_device_features = {0};
+    std::vector<const char *> desiredDeviceLevelExtensions = {"VK_KHR_swapchain"};
+    VkPhysicalDeviceFeatures selectedDeviceFeatures = {0};
 
-    VkDeviceCreateInfo device_create_info = {
+    VkDeviceCreateInfo deviceCreateInfo = {
         VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         nullptr,
         0,
-        static_cast<uint32_t>(queue_create_info.size()),
-        queue_create_info.data(),
+        static_cast<uint32_t>(queueCreateInfo.size()),
+        queueCreateInfo.data(),
         0,
         nullptr,
-        static_cast<uint32_t>(desired_device_level_extensions.size()),
-        desired_device_level_extensions.data(),
-        &selected_device_features};
+        static_cast<uint32_t>(desiredDeviceLevelExtensions.size()),
+        desiredDeviceLevelExtensions.data(),
+        &selectedDeviceFeatures,
+    };
 
-    VkResult result = vkCreateDevice(physical_device, &device_create_info, nullptr, &device);
-    if (result == VK_SUCCESS)
+    VkResult deviceResult = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device);
+    if (deviceResult != VK_SUCCESS)
     {
         jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         jstring message = env->NewStringUTF("Failed to initialize VkDevice");
-        jint jresult = static_cast<jint>(result);
+        jint jresult = static_cast<jint>(deviceResult);
         jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, jresult);
         env->Throw(static_cast<jthrowable>(exceptionObject));
         return;
     }
 
-    vkGetDeviceQueue(device, queue_family_index, 0, &queue);
+    vkGetDeviceQueue(device, queueFamilyIndex, 0, &queue);
     volkLoadDevice(device);
 }
 
 /**
- * @brief
+ * @brief Creates a Vulkan swapchain.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createSwapchain(JNIEnv *env, jobject obj)
 {
@@ -303,86 +299,85 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createSwa
     jlong sdlWindowPtr = env->GetLongField(obj, fieldID);
     SDL_Window *sdlWindow = reinterpret_cast<SDL_Window *>(sdlWindowPtr);
 
-    int w, h;
-    SDL_GetWindowSize(sdlWindow, &w, &h);
+    int width, height;
+    SDL_GetWindowSize(sdlWindow, &width, &height);
+    windowSize.width = width;
+    windowSize.height = height;
 
-    window_size = {};
-    window_size.width = w;
-    window_size.height = h;
+    uint32_t presentationModesNumber;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentationModesNumber, nullptr);
+    std::vector<VkPresentModeKHR> presentationModes(presentationModesNumber);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentationModesNumber, presentationModes.data());
+    VkPresentModeKHR selectedPresentMode = VkHelper::selectPresentationMode(presentationModes, VK_PRESENT_MODE_MAILBOX_KHR);
 
-    uint32_t presentation_modes_number;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &presentation_modes_number, nullptr);
-    std::vector<VkPresentModeKHR> presentation_modes(presentation_modes_number);
-    vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &presentation_modes_number, presentation_modes.data());
-    VkPresentModeKHR selected_present_mode = VkHelper::selectPresentationMode(presentation_modes, VK_PRESENT_MODE_MAILBOX_KHR);
+    VkSurfaceCapabilitiesKHR surfaceCapabilities;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
 
-    VkSurfaceCapabilitiesKHR surface_capabilities;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &surface_capabilities);
+    uint32_t numberOfImages = VkHelper::selectNumberOfImages(surfaceCapabilities);
+    VkExtent2D sizeOfImages = VkHelper::selectSizeOfImages(surfaceCapabilities, windowSize);
+    VkImageUsageFlags imageUsage = VkHelper::selectImageUsage(surfaceCapabilities, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+    VkSurfaceTransformFlagBitsKHR surfaceTransform = VkHelper::selectSurfaceTransform(surfaceCapabilities, VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR);
 
-    uint32_t number_of_images = VkHelper::selectNumberOfImages(surface_capabilities);
-    VkExtent2D size_of_images = VkHelper::selectSizeOfImages(surface_capabilities, window_size);
-    VkImageUsageFlags image_usage = VkHelper::selectImageUsage(surface_capabilities, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-    VkSurfaceTransformFlagBitsKHR surface_transform = VkHelper::selectSurfaceTransform(surface_capabilities, VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR);
+    uint32_t formatsCount = 0;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatsCount, nullptr);
+    std::vector<VkSurfaceFormatKHR> surfaceFormats(formatsCount);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatsCount, surfaceFormats.data());
+    VkSurfaceFormatKHR surfaceFormat = VkHelper::selectSurfaceFormat(surfaceFormats, {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR});
 
-    uint32_t formats_count = 0;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &formats_count, nullptr);
-    std::vector<VkSurfaceFormatKHR> surface_formats(formats_count);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &formats_count, surface_formats.data());
-    VkSurfaceFormatKHR surface_format = VkHelper::selectSurfaceFormat(surface_formats, {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR});
-
-    swapchain_create_info = {
+    swapchainCreateInfo = {
         VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         nullptr,
         0,
         surface,
-        number_of_images,
-        surface_format.format,
-        surface_format.colorSpace,
-        size_of_images,
+        numberOfImages,
+        surfaceFormat.format,
+        surfaceFormat.colorSpace,
+        sizeOfImages,
         1,
-        image_usage,
+        imageUsage,
         VK_SHARING_MODE_EXCLUSIVE,
         0,
         nullptr,
-        surface_transform,
+        surfaceTransform,
         VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-        selected_present_mode,
+        selectedPresentMode,
         VK_TRUE,
-        old_swapchain};
+        nullptr,
+    };
 
-    VkResult b_result = vkCreateSwapchainKHR(device, &swapchain_create_info, nullptr, &swapchain);
-    if (b_result != VK_SUCCESS)
+    VkResult swapchainResult = vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapchain);
+    if (swapchainResult != VK_SUCCESS)
     {
         jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
         jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
         jstring message = env->NewStringUTF("Failed to initialize VkSwapchainKHR");
-        jint jresult = static_cast<jint>(b_result);
+        jint jresult = static_cast<jint>(swapchainResult);
         jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message, jresult);
         env->Throw(static_cast<jthrowable>(exceptionObject));
         return;
     }
 
-    vkGetSwapchainImagesKHR(device, swapchain, &swapchain_images_count, nullptr);
-    swapchain_images.resize(swapchain_images_count);
-    vkGetSwapchainImagesKHR(device, swapchain, &swapchain_images_count, swapchain_images.data());
+    vkGetSwapchainImagesKHR(device, swapchain, &swapchainImagesCount, nullptr);
+    swapchainImages.resize(swapchainImagesCount);
+    vkGetSwapchainImagesKHR(device, swapchain, &swapchainImagesCount, swapchainImages.data());
 }
 
 /**
- * @brief
+ * @brief Creates a Vulkan command pool.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createCommandPool(JNIEnv *env, jobject obj)
 {
-    VkCommandPoolCreateInfo command_pool_create_info = {
+    VkCommandPoolCreateInfo commandPoolCreateInfo = {
         VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         nullptr,
         0,
-        queue_family_index,
+        queueFamilyIndex,
     };
 
-    VkResult result = vkCreateCommandPool(device, &command_pool_create_info, nullptr, &command_pool);
+    VkResult result = vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &commandPool);
     if (result != VK_SUCCESS)
     {
         jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
@@ -395,24 +390,24 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createCom
 }
 
 /**
- * @brief
+ * @brief Allocates the command buffers.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_allocateCommandBuffers(JNIEnv *env, jobject obj)
 {
-    VkCommandBufferAllocateInfo command_buffer_allocate_info = {
+    VkCommandBufferAllocateInfo commandBufferAllocateInfo = {
         VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         nullptr,
-        command_pool,
+        commandPool,
         VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        swapchain_images_count,
+        swapchainImagesCount,
     };
 
-    command_buffers.resize(swapchain_images_count);
+    commandBuffers.resize(swapchainImagesCount);
 
-    VkResult result = vkAllocateCommandBuffers(device, &command_buffer_allocate_info, command_buffers.data());
+    VkResult result = vkAllocateCommandBuffers(device, &commandBufferAllocateInfo, commandBuffers.data());
     if (result != VK_SUCCESS)
     {
         jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
@@ -425,37 +420,40 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_allocateC
 }
 
 /**
- * @brief
+ * @brief Creates host buffers.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createHostBuffers(JNIEnv *env, jobject obj)
 {
-    VkBufferCreateInfo buffer_create_info = {
+    VkBufferCreateInfo bufferCreateInfo = {
         VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         nullptr,
         0,
-        input_data.size() * sizeof(decltype(input_data[0])),
+        inputData.size() * sizeof(decltype(inputData[0])),
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_SHARING_MODE_EXCLUSIVE,
         0,
-        nullptr};
-    vkCreateBuffer(device, &buffer_create_info, nullptr, &host_vertex_buffer);
+        nullptr,
+    };
 
-    buffer_create_info.size = sizeof(glm::mat4);
-    vkCreateBuffer(device, &buffer_create_info, nullptr, &host_m_matrix_buffer);
+    vkCreateBuffer(device, &bufferCreateInfo, nullptr, &hostVertexBuffer);
 
-    vkGetBufferMemoryRequirements(device, host_vertex_buffer, &host_memory_requirements[0]);
-    vkGetBufferMemoryRequirements(device, host_m_matrix_buffer, &host_memory_requirements[1]);
+    bufferCreateInfo.size = sizeof(glm::mat4);
+    vkCreateBuffer(device, &bufferCreateInfo, nullptr, &hostMatrixBuffer);
 
-    VkMemoryAllocateInfo memory_allocate_info = {
+    vkGetBufferMemoryRequirements(device, hostVertexBuffer, &hostMemoryRequirements[0]);
+    vkGetBufferMemoryRequirements(device, hostMatrixBuffer, &hostMemoryRequirements[1]);
+
+    VkMemoryAllocateInfo memoryAllocateInfo = {
         VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         nullptr,
-        host_memory_requirements[0].size + host_memory_requirements[1].size,
-        VkHelper::selectMemoryIndex(physical_device_memory_properties, host_memory_requirements[0], VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)};
+        hostMemoryRequirements[0].size + hostMemoryRequirements[1].size,
+        VkHelper::selectMemoryIndex(physicalDeviceMemoryProperties, hostMemoryRequirements[0], VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
+    };
 
-    VkResult result = vkAllocateMemory(device, &memory_allocate_info, nullptr, &host_memory);
+    VkResult result = vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &hostMemory);
     if (result != VK_SUCCESS)
     {
         jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
@@ -466,48 +464,51 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createHos
         env->Throw(static_cast<jthrowable>(exceptionObject));
     }
 
-    vkBindBufferMemory(device, host_vertex_buffer, host_memory, 0);
-    vkBindBufferMemory(device, host_m_matrix_buffer, host_memory, host_memory_requirements[0].size);
+    vkBindBufferMemory(device, hostVertexBuffer, hostMemory, 0);
+    vkBindBufferMemory(device, hostMatrixBuffer, hostMemory, hostMemoryRequirements[0].size);
 
-    vkMapMemory(device, host_memory, 0, VK_WHOLE_SIZE, 0, &host_data_pointer);
-    memcpy(host_data_pointer, input_data.data(), input_data.size() * sizeof(decltype(input_data[0])));
-    VkMappedMemoryRange mapped_memory_range = {VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE, nullptr, host_memory, 0, VK_WHOLE_SIZE};
+    vkMapMemory(device, hostMemory, 0, VK_WHOLE_SIZE, 0, &hostDataPointer);
+    memcpy(hostDataPointer, inputData.data(), inputData.size() * sizeof(decltype(inputData[0])));
+    VkMappedMemoryRange mapped_memory_range = {VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE, nullptr, hostMemory, 0, VK_WHOLE_SIZE};
     vkFlushMappedMemoryRanges(device, 1, &mapped_memory_range);
 }
 
 /**
- * @brief
+ * @brief Creates device buffers.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createDeviceBuffers(JNIEnv *env, jobject obj)
 {
-    VkBufferCreateInfo buffer_create_info = {
+    VkBufferCreateInfo bufferCreateInfo = {
         VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         nullptr,
         0,
-        input_data.size() * sizeof(decltype(input_data[0])),
+        inputData.size() * sizeof(decltype(inputData[0])),
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         VK_SHARING_MODE_EXCLUSIVE,
         0,
-        nullptr};
-    vkCreateBuffer(device, &buffer_create_info, nullptr, &device_vertex_buffer);
+        nullptr,
+    };
 
-    buffer_create_info.size = sizeof(glm::mat4);
-    buffer_create_info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    vkCreateBuffer(device, &buffer_create_info, nullptr, &device_m_matrix_buffer);
+    vkCreateBuffer(device, &bufferCreateInfo, nullptr, &deviceVertexBuffer);
 
-    vkGetBufferMemoryRequirements(device, device_m_matrix_buffer, &device_memory_requirements[0]);
-    vkGetBufferMemoryRequirements(device, device_vertex_buffer, &device_memory_requirements[1]);
+    bufferCreateInfo.size = sizeof(glm::mat4);
+    bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    vkCreateBuffer(device, &bufferCreateInfo, nullptr, &deviceMatrixBuffer);
 
-    VkMemoryAllocateInfo memory_allocate_info = {
+    vkGetBufferMemoryRequirements(device, deviceMatrixBuffer, &deviceMemoryRequirements[0]);
+    vkGetBufferMemoryRequirements(device, deviceVertexBuffer, &deviceMemoryRequirements[1]);
+
+    VkMemoryAllocateInfo memoryAllocateInfo = {
         VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         nullptr,
-        device_memory_requirements[0].size + device_memory_requirements[1].size,
-        VkHelper::selectMemoryIndex(physical_device_memory_properties, device_memory_requirements[0], VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)};
+        deviceMemoryRequirements[0].size + deviceMemoryRequirements[1].size,
+        VkHelper::selectMemoryIndex(physicalDeviceMemoryProperties, deviceMemoryRequirements[0], VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
+    };
 
-    VkResult result = vkAllocateMemory(device, &memory_allocate_info, nullptr, &device_memory);
+    VkResult result = vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &deviceMemory);
     if (result != VK_SUCCESS)
     {
         jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
@@ -518,162 +519,193 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createDev
         env->Throw(static_cast<jthrowable>(exceptionObject));
     }
 
-    vkBindBufferMemory(device, device_vertex_buffer, device_memory, 0);
-    vkBindBufferMemory(device, device_m_matrix_buffer, device_memory, device_memory_requirements[0].size);
+    vkBindBufferMemory(device, deviceVertexBuffer, deviceMemory, 0);
+    vkBindBufferMemory(device, deviceMatrixBuffer, deviceMemory, deviceMemoryRequirements[0].size);
 }
 
 /**
- * @brief
+ * @brief Creates Descriptor pool
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createDescriptorPool(JNIEnv *env, jobject obj)
 {
-    VkDescriptorPoolSize descriptor_pool_size = {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1};
-    VkDescriptorPoolCreateInfo descriptor_pool_create_info = {
+    VkDescriptorPoolSize descriptorPoolSize = {
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        1,
+    };
+
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
         VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         nullptr,
         0,
         1,
         1,
-        &descriptor_pool_size};
-    vkCreateDescriptorPool(device, &descriptor_pool_create_info, nullptr, &descriptor_pool);
+        &descriptorPoolSize,
+    };
+
+    vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, nullptr, &descriptorPool);
 }
 
 /**
- * @brief
+ * @brief Allocates Descriptor Sets.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_allocateDescriptorSets(JNIEnv *env, jobject obj)
 {
-    VkDescriptorSetLayoutBinding descriptor_set_layout_binding = {
+    VkDescriptorSetLayoutBinding descriptorSetLayoutBinding = {
         0,
         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         1,
         VK_SHADER_STAGE_VERTEX_BIT,
-        nullptr};
-    VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = {
+        nullptr,
+    };
+
+    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
         VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         nullptr,
         0,
         1,
-        &descriptor_set_layout_binding};
-    vkCreateDescriptorSetLayout(device, &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout);
+        &descriptorSetLayoutBinding,
+    };
 
-    VkDescriptorSetAllocateInfo descriptor_set_allocate_info = {
+    vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout);
+
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
         VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         nullptr,
-        descriptor_pool,
+        descriptorPool,
         1,
-        &descriptor_set_layout};
-    vkAllocateDescriptorSets(device, &descriptor_set_allocate_info, &descriptor_set);
+        &descriptorSetLayout,
+    };
 
-    VkDescriptorBufferInfo descriptor_buffer_info = {device_m_matrix_buffer, 0, sizeof(glm::mat4)};
-    VkWriteDescriptorSet write_descriptor_set = {
+    vkAllocateDescriptorSets(device, &descriptorSetAllocateInfo, &descriptorSet);
+
+    VkDescriptorBufferInfo descriptorBufferInfo = {
+        deviceMatrixBuffer,
+        0,
+        sizeof(glm::mat4),
+    };
+
+    VkWriteDescriptorSet writeDescriptorSet = {
         VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         nullptr,
-        descriptor_set,
+        descriptorSet,
         0,
         0,
         1,
         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         nullptr,
-        &descriptor_buffer_info,
-        nullptr};
-    vkUpdateDescriptorSets(device, 1, &write_descriptor_set, 0, nullptr);
+        &descriptorBufferInfo,
+        nullptr,
+    };
+
+    vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
 }
 
 /**
- * @brief
+ * @brief Creates a Vulkan Renderpass.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createRenderpass(JNIEnv *env, jobject obj)
 {
-    VkAttachmentDescription attachment_description = {
+    VkAttachmentDescription attachmentDescription = {
         0,
-        swapchain_create_info.imageFormat,
+        swapchainCreateInfo.imageFormat,
         VK_SAMPLE_COUNT_1_BIT,
         VK_ATTACHMENT_LOAD_OP_CLEAR,
         VK_ATTACHMENT_STORE_OP_STORE,
         VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         VK_ATTACHMENT_STORE_OP_DONT_CARE,
         VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR};
+        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+    };
 
-    VkAttachmentReference attachment_reference = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
-    VkSubpassDescription subpass_description = {
+    VkAttachmentReference attachmentReference = {
+        0,
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    };
+
+    VkSubpassDescription subpassDescription = {
         0,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         0,
         nullptr,
         1,
-        &attachment_reference,
+        &attachmentReference,
         nullptr,
         nullptr,
         0,
-        nullptr};
+        nullptr,
+    };
 
-    VkRenderPassCreateInfo render_pass_create_info = {
+    VkRenderPassCreateInfo renderPassCreateInfo = {
         VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         nullptr,
         0,
         1,
-        &attachment_description,
+        &attachmentDescription,
         1,
-        &subpass_description,
+        &subpassDescription,
         0,
-        nullptr};
-    vkCreateRenderPass(device, &render_pass_create_info, nullptr, &render_pass);
+        nullptr,
+    };
+
+    vkCreateRenderPass(device, &renderPassCreateInfo, nullptr, &renderPass);
 }
 
 /**
- * @brief
+ * @brief Creates Vulkan Framebuffers.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createFramebuffers(JNIEnv *env, jobject obj)
 {
-    framebuffers.resize(swapchain_images_count);
-    swapchain_images_views.resize(swapchain_images_count);
+    framebuffers.resize(swapchainImagesCount);
+    swapchainImagesViews.resize(swapchainImagesCount);
 
-    for (int i = 0; i < swapchain_images_count; i++)
+    for (int i = 0; i < swapchainImagesCount; i++)
     {
-        VkImageViewCreateInfo image_view_create_info = {
+        VkImageViewCreateInfo imageViewCreateInfo = {
             VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
             nullptr,
             0,
-            swapchain_images[i],
+            swapchainImages[i],
             VK_IMAGE_VIEW_TYPE_2D,
-            swapchain_create_info.imageFormat,
+            swapchainCreateInfo.imageFormat,
             {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY},
-            {VK_IMAGE_ASPECT_COLOR_BIT, 0, VK_REMAINING_MIP_LEVELS, 0, VK_REMAINING_ARRAY_LAYERS}};
-        vkCreateImageView(device, &image_view_create_info, nullptr, &swapchain_images_views[i]);
+            {VK_IMAGE_ASPECT_COLOR_BIT, 0, VK_REMAINING_MIP_LEVELS, 0, VK_REMAINING_ARRAY_LAYERS},
+        };
 
-        VkFramebufferCreateInfo framebuffer_create_info = {
+        vkCreateImageView(device, &imageViewCreateInfo, nullptr, &swapchainImagesViews[i]);
+
+        VkFramebufferCreateInfo framebufferCreateInfo = {
             VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
             nullptr,
             0,
-            render_pass,
+            renderPass,
             1,
-            &swapchain_images_views[i],
-            swapchain_create_info.imageExtent.width,
-            swapchain_create_info.imageExtent.height,
-            swapchain_create_info.imageArrayLayers};
-        vkCreateFramebuffer(device, &framebuffer_create_info, nullptr, &framebuffers[i]);
+            &swapchainImagesViews[i],
+            swapchainCreateInfo.imageExtent.width,
+            swapchainCreateInfo.imageExtent.height,
+            swapchainCreateInfo.imageArrayLayers,
+        };
+
+        vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffers[i]);
     }
 }
 
 /**
- * @brief
+ * @brief Reads SPIRV files.
  *
- * @param filePath
- * @return std::vector<uint32_t>
+ * @param filePath Path to the shader file (temporary file).
+ * @return The files content.
  */
 std::vector<uint32_t> readSPIRVFile(const std::string &filePath)
 {
@@ -689,10 +721,12 @@ std::vector<uint32_t> readSPIRVFile(const std::string &filePath)
 }
 
 /**
- * @brief
+ * @brief Loads shader modules.
  *
- * @param path
- * @return VkShaderModule
+ * @param path Internal path to the shader file.
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
+ * @return VkShaderModule The shader module to be loaded from graphics pipeline.
  */
 VkShaderModule loadShaderModule(const char *name, JNIEnv *env, jobject obj)
 {
@@ -705,21 +739,21 @@ VkShaderModule loadShaderModule(const char *name, JNIEnv *env, jobject obj)
     const std::string spath(nativeString);
     std::vector<uint32_t> spirv = readSPIRVFile(spath);
 
-    VkShaderModuleCreateInfo module_info{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
-    module_info.codeSize = spirv.size() * sizeof(uint32_t);
-    module_info.pCode = spirv.data();
+    VkShaderModuleCreateInfo moduleInfo{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+    moduleInfo.codeSize = spirv.size() * sizeof(uint32_t);
+    moduleInfo.pCode = spirv.data();
 
-    VkShaderModule shader_module = VK_NULL_HANDLE;
-    vkCreateShaderModule(device, &module_info, nullptr, &shader_module);
+    VkShaderModule shaderModule = VK_NULL_HANDLE;
+    vkCreateShaderModule(device, &moduleInfo, nullptr, &shaderModule);
 
-    return shader_module;
+    return shaderModule;
 }
 
 /**
- * @brief
+ * @brief Creates a Vulkan graphics pipeline.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createPipeline(JNIEnv *env, jobject obj)
 {
@@ -749,7 +783,7 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createPip
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
     VkSurfaceCapabilitiesKHR capabilities;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &capabilities);
     VkExtent2D swapchainExtent = capabilities.currentExtent;
 
     VkViewport viewport{};
@@ -802,10 +836,10 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createPip
     uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     uboLayoutBinding.descriptorCount = 1;
     uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+    uboLayoutBinding.pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo layoutCreateInfo{};
-    layoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     layoutCreateInfo.bindingCount = 1;
     layoutCreateInfo.pBindings = &uboLayoutBinding;
 
@@ -817,7 +851,7 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createPip
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 
-    VkResult result = vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipeline_layout);
+    VkResult result = vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
     if (result != VK_SUCCESS)
     {
         jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
@@ -839,8 +873,8 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createPip
     pipelineInfo.pRasterizationState = &rasterizer;
     pipelineInfo.pMultisampleState = &multisampling;
     pipelineInfo.pColorBlendState = &colorBlending;
-    pipelineInfo.layout = pipeline_layout;
-    pipelineInfo.renderPass = render_pass;
+    pipelineInfo.layout = pipelineLayout;
+    pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = 0;
 
     VkResult a_result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline);
@@ -860,63 +894,76 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createPip
 }
 
 /**
- * @brief
+ * @brief Uploads the input data.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_uploadInputData(JNIEnv *env, jobject obj)
 {
-    VkCommandBufferBeginInfo command_buffer_begin_info = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr};
-    vkBeginCommandBuffer(command_buffers[0], &command_buffer_begin_info);
-    VkBufferCopy buffer_copy = {0, 0, input_data.size() * sizeof(decltype(input_data[0]))};
-    vkCmdCopyBuffer(command_buffers[0], host_vertex_buffer, device_vertex_buffer, 1, &buffer_copy);
-    vkEndCommandBuffer(command_buffers[0]);
+    VkCommandBufferBeginInfo commandBufferBeginInfo = {
+        VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        nullptr,
+        VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        nullptr,
+    };
 
-    VkFenceCreateInfo fence_create_info = {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, nullptr, 0};
+    vkBeginCommandBuffer(commandBuffers[0], &commandBufferBeginInfo);
+    VkBufferCopy bufferCopy = {0, 0, inputData.size() * sizeof(decltype(inputData[0]))};
+    vkCmdCopyBuffer(commandBuffers[0], hostVertexBuffer, deviceVertexBuffer, 1, &bufferCopy);
+    vkEndCommandBuffer(commandBuffers[0]);
+
+    VkFenceCreateInfo fenceCreateInfo = {
+        VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        nullptr,
+        0,
+    };
+
     VkFence fence;
-    vkCreateFence(device, &fence_create_info, nullptr, &fence);
+    vkCreateFence(device, &fenceCreateInfo, nullptr, &fence);
 
-    VkPipelineStageFlags pipeline_stage_flags = {VK_PIPELINE_STAGE_TRANSFER_BIT};
-    VkSubmitInfo submit_info = {
+    VkPipelineStageFlags pipelineStageFlags = {VK_PIPELINE_STAGE_TRANSFER_BIT};
+    VkSubmitInfo submitInfo = {
         VK_STRUCTURE_TYPE_SUBMIT_INFO,
         nullptr,
         0,
         nullptr,
-        &pipeline_stage_flags,
+        &pipelineStageFlags,
         1,
-        &command_buffers[0],
+        &commandBuffers[0],
         0,
-        nullptr};
-    vkQueueSubmit(queue, 1, &submit_info, fence);
+        nullptr,
+    };
+
+    vkQueueSubmit(queue, 1, &submitInfo, fence);
 
     vkWaitForFences(device, 1, &fence, VK_TRUE, 20000000);
-    vkResetCommandPool(device, command_pool, 0);
+    vkResetCommandPool(device, commandPool, 0);
     vkDestroyFence(device, fence, nullptr);
 }
 
 /**
- * @brief
+ * @brief Records the command buffers for Vulkan rendering.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_recordCommandBuffers(JNIEnv *env, jobject obj)
 {
     VkClearValue clearColor = {{0.0f, 0.0f, 0.0f, 1.0f}};
 
-    for (int i = 0; i < swapchain_images_count; i++)
+    for (int i = 0; i < swapchainImagesCount; i++)
     {
-        VkCommandBufferBeginInfo command_buffer_begin_info = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT, nullptr};
-        vkBeginCommandBuffer(command_buffers[i], &command_buffer_begin_info);
+        VkCommandBufferBeginInfo commandBufferBeginInfo = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT, nullptr};
+        vkBeginCommandBuffer(commandBuffers[i], &commandBufferBeginInfo);
 
-        VkBufferCopy buffer_copy = {0, 0, sizeof(glm::mat4)};
-        vkCmdCopyBuffer(command_buffers[i], host_m_matrix_buffer, device_m_matrix_buffer, 1, &buffer_copy);
+        VkBufferCopy bufferCopy = {0, 0, sizeof(glm::mat4)};
+        vkCmdCopyBuffer(commandBuffers[i], hostMatrixBuffer, deviceMatrixBuffer, 1, &bufferCopy);
 
-        VkMemoryBarrier memory_barrier = {VK_STRUCTURE_TYPE_MEMORY_BARRIER, nullptr, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_UNIFORM_READ_BIT};
-        vkCmdPipelineBarrier(command_buffers[i], VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 1, &memory_barrier, 0, nullptr, 0, nullptr);
+        VkMemoryBarrier memoryBarrier = {VK_STRUCTURE_TYPE_MEMORY_BARRIER, nullptr, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_UNIFORM_READ_BIT};
+        vkCmdPipelineBarrier(commandBuffers[i], VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
 
-        VkImageMemoryBarrier image_memory_barrier = {
+        VkImageMemoryBarrier imageMemoryBarrier = {
             VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
             nullptr,
             0,
@@ -925,65 +972,65 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_recordCom
             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
             VK_QUEUE_FAMILY_IGNORED,
             VK_QUEUE_FAMILY_IGNORED,
-            swapchain_images[i],
+            swapchainImages[i],
             {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}};
-        vkCmdPipelineBarrier(command_buffers[i], VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_memory_barrier);
+        vkCmdPipelineBarrier(commandBuffers[i], VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
-        VkRenderPassBeginInfo render_pass_begin_info = {
+        VkRenderPassBeginInfo renderPassBeginInfo = {
             VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
             nullptr,
-            render_pass,
+            renderPass,
             framebuffers[i],
-            {{0, 0}, {swapchain_create_info.imageExtent}},
+            {{0, 0}, {swapchainCreateInfo.imageExtent}},
             1,
             &clearColor};
-        vkCmdBeginRenderPass(command_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(commandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
+        vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
-        vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+        vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
         VkDeviceSize offset = 0;
-        vkCmdBindVertexBuffers(command_buffers[i], 0, 1, &device_vertex_buffer, &offset);
+        vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, &deviceVertexBuffer, &offset);
 
-        vkCmdDraw(command_buffers[i], 3, 1, 0, 0);
+        vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
 
-        vkCmdEndRenderPass(command_buffers[i]);
+        vkCmdEndRenderPass(commandBuffers[i]);
 
-        vkEndCommandBuffer(command_buffers[i]);
+        vkEndCommandBuffer(commandBuffers[i]);
     }
-    vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+    vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 }
 
 /**
- * @brief
+ * @brief Creates semaphores for Vulkan synchronization.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createSemaphores(JNIEnv *env, jobject obj)
 {
-    VkSemaphoreCreateInfo semaphore_create_info = {VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, nullptr, 0};
+    VkSemaphoreCreateInfo semaphoreCreateInfo = {VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, nullptr, 0};
     semaphores.resize(2);
     for (int i = 0; i < semaphores.size(); i++)
     {
-        vkCreateSemaphore(device, &semaphore_create_info, nullptr, &semaphores[i]);
+        vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &semaphores[i]);
     }
 }
 
 /**
- * @brief
+ * @brief Renders the Vulkan scene.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_render(JNIEnv *env, jobject obj)
 {
 
     jclass cls = env->GetObjectClass(obj);
 
-    uint32_t image_index = 0;
-    VkResult res = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, semaphores[0], VK_NULL_HANDLE, &image_index);
+    uint32_t imageIndex = 0;
+    VkResult res = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, semaphores[0], VK_NULL_HANDLE, &imageIndex);
     if (res != VK_SUCCESS)
     {
         jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
@@ -994,29 +1041,29 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_render(JN
         env->Throw(static_cast<jthrowable>(exceptionObject));
     }
 
-    VkPipelineStageFlags pipeline_stage_flags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    VkSubmitInfo submit_info = {
+    VkPipelineStageFlags pipelineStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    VkSubmitInfo submitInfo = {
         VK_STRUCTURE_TYPE_SUBMIT_INFO,
         nullptr,
         1,
         &semaphores[0],
-        &pipeline_stage_flags,
+        &pipelineStageFlags,
         1,
-        &command_buffers[image_index],
+        &commandBuffers[imageIndex],
         1,
         &semaphores[1]};
-    vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE);
+    vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
 
-    VkPresentInfoKHR present_info = {
+    VkPresentInfoKHR presentInfo = {
         VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         nullptr,
         1,
         &semaphores[1],
         1,
         &swapchain,
-        &image_index};
+        &imageIndex};
 
-    res = vkQueuePresentKHR(queue, &present_info);
+    res = vkQueuePresentKHR(queue, &presentInfo);
     if (res != VK_SUCCESS)
     {
         jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
@@ -1029,10 +1076,10 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_render(JN
 }
 
 /**
- * @brief
+ * @brief Destroys the Vulkan resources.
  *
- * @param env
- * @param obj
+ * @param env The JNI environment.
+ * @param obj The Java object instance.
  */
 JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_destroy(JNIEnv *env, jobject obj)
 {
@@ -1046,24 +1093,24 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_destroy(J
     for (int i = 0; i < framebuffers.size(); i++)
     {
         vkDestroyFramebuffer(device, framebuffers[i], nullptr);
-        vkDestroyImageView(device, swapchain_images_views[i], nullptr);
+        vkDestroyImageView(device, swapchainImagesViews[i], nullptr);
     }
-    vkDestroyRenderPass(device, render_pass, nullptr);
-    vkDestroyDescriptorSetLayout(device, descriptor_set_layout, nullptr);
-    vkDestroyDescriptorPool(device, descriptor_pool, nullptr);
+    vkDestroyRenderPass(device, renderPass, nullptr);
+    vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+    vkDestroyDescriptorPool(device, descriptorPool, nullptr);
     for (int i = 0; i < semaphores.size(); i++)
     {
         vkDestroySemaphore(device, semaphores[i], nullptr);
     }
-    vkUnmapMemory(device, host_memory);
-    vkDestroyBuffer(device, host_vertex_buffer, nullptr);
-    vkDestroyBuffer(device, host_m_matrix_buffer, nullptr);
-    vkFreeMemory(device, host_memory, nullptr);
-    vkDestroyBuffer(device, device_vertex_buffer, nullptr);
-    vkDestroyBuffer(device, device_m_matrix_buffer, nullptr);
-    vkFreeMemory(device, device_memory, nullptr);
-    vkFreeCommandBuffers(device, command_pool, command_buffers.size(), command_buffers.data());
-    vkDestroyCommandPool(device, command_pool, nullptr);
+    vkUnmapMemory(device, hostMemory);
+    vkDestroyBuffer(device, hostVertexBuffer, nullptr);
+    vkDestroyBuffer(device, hostMatrixBuffer, nullptr);
+    vkFreeMemory(device, hostMemory, nullptr);
+    vkDestroyBuffer(device, deviceVertexBuffer, nullptr);
+    vkDestroyBuffer(device, deviceMatrixBuffer, nullptr);
+    vkFreeMemory(device, deviceMemory, nullptr);
+    vkFreeCommandBuffers(device, commandPool, commandBuffers.size(), commandBuffers.data());
+    vkDestroyCommandPool(device, commandPool, nullptr);
     vkDestroySwapchainKHR(device, swapchain, nullptr);
     vkDestroyDevice(device, nullptr);
     vkDestroySurfaceKHR(instance, surface, nullptr);
