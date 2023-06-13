@@ -11,8 +11,6 @@
 
 #include "vulkan/VkHelper.hpp"
 
-using namespace VkHelper;
-
 /**
  * @brief Selects the presentation mode for a Vulkan surface.
  *
@@ -20,7 +18,7 @@ using namespace VkHelper;
  * @param desiredPresentationMode The desired presentation mode.
  * @return The selected presentation mode.
  */
-VkPresentModeKHR selectPresentationMode(const std::vector<VkPresentModeKHR> &presentationModes, VkPresentModeKHR desiredPresentationMode)
+VkPresentModeKHR VkHelper::selectPresentationMode(const std::vector<VkPresentModeKHR> &presentationModes, VkPresentModeKHR desiredPresentationMode)
 {
     VkPresentModeKHR selectedPresentMode;
     if (std::find(presentationModes.begin(), presentationModes.end(), desiredPresentationMode) != presentationModes.end())
@@ -40,7 +38,7 @@ VkPresentModeKHR selectPresentationMode(const std::vector<VkPresentModeKHR> &pre
  * @param surfaceCapabilities The capabilities of the surface.
  * @return The selected number of images.
  */
-uint32_t selectNumberOfImages(const VkSurfaceCapabilitiesKHR &surfaceCapabilities)
+uint32_t VkHelper::selectNumberOfImages(const VkSurfaceCapabilitiesKHR &surfaceCapabilities)
 {
     uint32_t numberOfImages = surfaceCapabilities.minImageCount + 1;
     if ((surfaceCapabilities.maxImageCount > 0) && (numberOfImages > surfaceCapabilities.maxImageCount))
@@ -57,7 +55,7 @@ uint32_t selectNumberOfImages(const VkSurfaceCapabilitiesKHR &surfaceCapabilitie
  * @param desiredSizeOfImages The desired size of the images.
  * @return The selected size of images.
  */
-VkExtent2D selectSizeOfImages(const VkSurfaceCapabilitiesKHR &surfaceCapabilities, VkExtent2D desiredSizeOfImages)
+VkExtent2D VkHelper::selectSizeOfImages(const VkSurfaceCapabilitiesKHR &surfaceCapabilities, VkExtent2D desiredSizeOfImages)
 {
     if (0xFFFFFFFF == surfaceCapabilities.currentExtent.width)
     {
@@ -94,7 +92,7 @@ VkExtent2D selectSizeOfImages(const VkSurfaceCapabilitiesKHR &surfaceCapabilitie
  * @param desiredUsages The desired image usage flags.
  * @return The selected image usage flags.
  */
-VkImageUsageFlags selectImageUsage(const VkSurfaceCapabilitiesKHR &surfaceCapabilities, VkImageUsageFlags desiredUsages)
+VkImageUsageFlags VkHelper::selectImageUsage(const VkSurfaceCapabilitiesKHR &surfaceCapabilities, VkImageUsageFlags desiredUsages)
 {
     VkImageUsageFlags imageUsage;
     imageUsage = desiredUsages & surfaceCapabilities.supportedUsageFlags;
@@ -112,7 +110,7 @@ VkImageUsageFlags selectImageUsage(const VkSurfaceCapabilitiesKHR &surfaceCapabi
  * @param desiredTransform The desired surface transform flag bits.
  * @return The selected surface transform flag bits.
  */
-VkSurfaceTransformFlagBitsKHR selectSurfaceTransform(const VkSurfaceCapabilitiesKHR &surfaceCapabilities, VkSurfaceTransformFlagBitsKHR desiredTransform)
+VkSurfaceTransformFlagBitsKHR VkHelper::selectSurfaceTransform(const VkSurfaceCapabilitiesKHR &surfaceCapabilities, VkSurfaceTransformFlagBitsKHR desiredTransform)
 {
     VkSurfaceTransformFlagBitsKHR surfaceTransform;
     if (surfaceCapabilities.supportedTransforms & desiredTransform)
@@ -133,7 +131,7 @@ VkSurfaceTransformFlagBitsKHR selectSurfaceTransform(const VkSurfaceCapabilities
  * @param desiredSurfaceFormat The desired surface format.
  * @return The selected surface format.
  */
-VkSurfaceFormatKHR selectSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &surfaceFormats, VkSurfaceFormatKHR desiredSurfaceFormat)
+VkSurfaceFormatKHR VkHelper::selectSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &surfaceFormats, VkSurfaceFormatKHR desiredSurfaceFormat)
 {
     VkSurfaceFormatKHR selectedSurfaceFormat;
     if ((1 == surfaceFormats.size()) &&
@@ -177,7 +175,7 @@ VkSurfaceFormatKHR selectSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &su
  * @param memoryProperties The desired memory property flags.
  * @return The selected memory index.
  */
-uint32_t selectMemoryIndex(const VkPhysicalDeviceMemoryProperties &physicalDeviceMemoryProperties, const VkMemoryRequirements &memoryRequirements, VkMemoryPropertyFlagBits memoryProperties)
+uint32_t VkHelper::selectMemoryIndex(const VkPhysicalDeviceMemoryProperties &physicalDeviceMemoryProperties, const VkMemoryRequirements &memoryRequirements, VkMemoryPropertyFlagBits memoryProperties)
 {
     for (uint32_t type = 0; type < physicalDeviceMemoryProperties.memoryTypeCount; ++type)
     {
@@ -203,7 +201,7 @@ uint32_t selectMemoryIndex(const VkPhysicalDeviceMemoryProperties &physicalDevic
  * @param pUserData User-defined data pointer.
  * @return VK_FALSE.
  */
-VkBool32 debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject, size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *pUserData)
+VkBool32 VkHelper::debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject, size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *pUserData)
 {
     if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
     {
