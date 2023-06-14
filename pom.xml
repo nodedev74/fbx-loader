@@ -112,7 +112,7 @@
                             <workingDirectory>${project.basedir}/src/main/resources/shaders</workingDirectory>
                             <arguments>
                                 <argument>
-                                    ${project.basedir}/src/main/native/src/vulkan/shaders/shader.vert</argument>
+                                    ${project.basedir}/src/main/native/src/shaders/shader.vert</argument>
                                 <argument>-o</argument>
                                 <argument>vert.spv</argument>
                             </arguments>
@@ -129,7 +129,7 @@
                             <workingDirectory>${project.basedir}/src/main/resources/shaders</workingDirectory>
                             <arguments>
                                 <argument>
-                                    ${project.basedir}/src/main/native/src/vulkan/shaders/shader.frag</argument>
+                                    ${project.basedir}/src/main/native/src/shaders/shader.frag</argument>
                                 <argument>-o</argument>
                                 <argument>frag.spv</argument>
                             </arguments>
@@ -184,9 +184,9 @@
                                 <argument>-I${env.VULKAN_SDK}/Include</argument>
                                 <argument>-I${env.VULKAN_SDK}/Include/Volk</argument>
                                 <argument>-c</argument>
-                                <argument>vulkan/VkHelper.cpp</argument>
-                                <argument>vulkan/VkHandler.cpp</argument>
-                                <argument>vulkan/VkWindow.cpp</argument>
+                                <argument>VkHelper.cpp</argument>
+                                <argument>VkHandler.cpp</argument>
+                                <argument>VkWindow.cpp</argument>
                             </arguments>
                         </configuration>
                     </execution>

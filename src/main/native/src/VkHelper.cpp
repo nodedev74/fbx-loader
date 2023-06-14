@@ -203,8 +203,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VkHelper::DebugCallback(
     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
     void *pUserData)
 {
-    validationOutputFile << pCallbackData->pMessage << std::endl;
-
     std::cout << pCallbackData->pMessage << std::endl;
 
     return VK_FALSE;

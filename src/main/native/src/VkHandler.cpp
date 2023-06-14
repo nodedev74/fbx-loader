@@ -35,6 +35,7 @@ using namespace VkHelper;
 VkExtent2D windowSize{};
 
 VkInstance instance;
+VkDebugUtilsMessengerEXT messenger;
 
 VkSurfaceKHR surface;
 VkSurfaceFormatKHR surfaceFormat;
@@ -89,19 +90,6 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createIns
     jfieldID fieldID = env->GetFieldID(cls, "sdlWindowPtr", "J");
     jlong sdlWindowPtr = env->GetLongField(obj, fieldID);
     SDL_Window *sdlWindow = reinterpret_cast<SDL_Window *>(sdlWindowPtr);
-
-    const char *validationOutputFilePath = "validation_output.txt";
-    validationOutputFile.open(validationOutputFilePath);
-    if (!validationOutputFile.is_open())
-    {
-        jclass exceptionClass = env->FindClass("com/github/nodedev74/jfbx/exception/VkRuntimeError");
-        jmethodID constructorID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
-        std::string rawMessage = std::string("Failed to open validation output file: ") + std::string(validationOutputFilePath);
-        jstring message = env->NewStringUTF(rawMessage.c_str());
-        jobject exceptionObject = env->NewObject(exceptionClass, constructorID, message);
-        env->Throw(static_cast<jthrowable>(exceptionObject));
-        return;
-    }
 
     VkResult volkInitResult = volkInitialize();
     if (volkInitResult != VK_SUCCESS)
@@ -178,8 +166,7 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createDeb
         reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
             vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
 
-    VkDebugUtilsMessengerEXT debugMessenger;
-    vkCreateDebugUtilsMessengerEXT(instance, &debugMessengerCreateInfo, nullptr, &debugMessenger);
+    vkCreateDebugUtilsMessengerEXT(instance, &debugMessengerCreateInfo, nullptr, &messenger);
 }
 
 /**
@@ -839,7 +826,7 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createPip
     uboLayoutBinding.pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo layoutCreateInfo{};
-    layoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    layoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     layoutCreateInfo.bindingCount = 1;
     layoutCreateInfo.pBindings = &uboLayoutBinding;
 
@@ -1115,5 +1102,6 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_destroy(J
     vkDestroyDevice(device, nullptr);
     vkDestroySurfaceKHR(instance, surface, nullptr);
     SDL_DestroyWindow(sdlWindow);
+    vkDestroyDebugUtilsMessengerEXT(instance, messenger, nullptr);
     vkDestroyInstance(instance, nullptr);
 }
