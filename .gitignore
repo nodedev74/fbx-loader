@@ -30,3 +30,4 @@ com_github_nodedev74_jfbx_*.h
 # Vulkan
 
 **/*.spv
+src/main/java/com/github/nodedev74/jfbx/collections/ObservableList.java
