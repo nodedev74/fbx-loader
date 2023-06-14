@@ -24,8 +24,6 @@
 
 namespace VkHelper
 {
-    static std::ofstream validationOutputFile;
-
     /**
      * @brief Selects the presentation mode for a Vulkan surface.
      *
