@@ -14,8 +14,6 @@
 
 com_github_nodedev74_jfbx_*.h
 
-**/validation_output.txt
-
 # Java
 
 *.class
@@ -25,9 +23,10 @@ com_github_nodedev74_jfbx_*.h
 **/*.drawio.bkp
 **/*.drawio.dtmp
 
-**/*.drawio.pdf
-
 # Vulkan
 
 **/*.spv
+
+# Future changes
+
 src/main/java/com/github/nodedev74/jfbx/collections/ObservableList.java
