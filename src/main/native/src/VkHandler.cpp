@@ -492,7 +492,7 @@ JNIEXPORT void JNICALL Java_com_github_nodedev74_jfbx_vulkan_VkHandler_createDev
         VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         nullptr,
         deviceMemoryRequirements[0].size + deviceMemoryRequirements[1].size,
-        VkHelper::selectMemoryIndex(physicalDeviceMemoryProperties, deviceMemoryRequirements[0], VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
+        selectMemoryIndex(physicalDeviceMemoryProperties, deviceMemoryRequirements[0], VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
     };
 
     VkResult result = vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &deviceMemory);
